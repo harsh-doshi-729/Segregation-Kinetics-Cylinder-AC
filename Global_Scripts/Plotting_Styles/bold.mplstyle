@@ -1,0 +1,41 @@
+# This is a matplotlib style sheet that stores the values of rcParams that can be read to style plots
+
+# Text styles:
+axes.titlesize: 20
+axes.titleweight: bold
+axes.labelsize: 18
+axes.labelweight: bold
+font.weight: bold
+axes.formatter.use_mathtext: True
+axes.formatter.limits: -3, 4
+
+# Plotting lines:
+axes.linewidth: 1
+
+# Grid:
+axes.grid: True
+grid.alpha: 0.7
+grid.linewidth: 0.6
+grid.linestyle: --
+
+# Legend:
+legend.fontsize: 15
+# axes.prop_cycle : cycler(color=[ "black", "0077FF", "0050FF", "blue", 'darkblue'])
+
+
+# Ticks:
+xtick.labelsize: 14
+
+ytick.labelsize: 14
+
+
+# Figure:
+figure.figsize: 10, 8
+figure.titleweight: bold
+figure.titlesize: 20
+figure.labelweight: bold
+figure.labelsize: 20
+
+# Box plot:
+boxplot.vertical: True
+boxplot.whiskers: 1.5

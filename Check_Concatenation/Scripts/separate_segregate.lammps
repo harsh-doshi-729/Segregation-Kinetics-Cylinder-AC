@@ -1,0 +1,361 @@
+#####################################################################################
+# LAMMPS Script to perform Langevin (faster) of two polymers in a mixed state contained in a big box to see if they are concatenated or not.
+# If the two polymers are not concatenated, then they should drift apart to different parts of the box given sufficient time.
+#####################################################################################
+
+################################################################################################################################################
+                                                    #    Monte Carlo Random Initialization
+# slower than Langevin, but using MC so that the the initial configuration relaxes to a state that does not blow up
+################################################################################################################################################
+
+###################################################################################################
+# Boundaries and units  (use LJ units and periodic boundaries)
+
+units lj                 # use lennard-jones (i.e. dimensionless) units
+boundary f f f           # all boundaries are non-periodic and fixed
+processors * * *
+###################################################################################################
+
+
+###################################################################################################
+# Global Variables:
+variable sigma equal 1
+variable cutoff equal ${sigma}*2^(1/6)
+# variable numberOfMonomers equal 100
+# variable polymerIndex equal 1
+variable halfLength equal ${numberOfMonomers}/2
+variable totalMonomers equal ${numberOfMonomers}
+# variable firstMonomerSecondRing equal ${numberOfMonomers}+1
+
+# variable seed equal 385788725
+# variables to set the dimensions:
+variable cubeLength equal 100 # centre at origin
+variable halfLength equal ${cubeLength}/2
+###################################################################################################
+
+
+###################################################################################################
+# Neighbour List
+
+# Parameters: skin = extra distance beyond force cutoff
+neighbor 2 bin
+# neigh_modify every 10 delay 0 check yes # default settings
+comm_modify mode single cutoff 3.5
+###################################################################################################
+
+
+###################################################################################################
+# Setting up the regions
+
+# the cuboid simulation box
+region cuboid block -${halfLength} ${halfLength} -${halfLength} ${halfLength} -${halfLength} ${halfLength} # centred at the origin
+###################################################################################################
+
+
+###################################################################################################
+# Setting up simulation box and reading atom positions
+
+atom_style angle          # atoms with bonds
+
+# creating the simulation box in shape of the region: 1 atomype, 1 bond type, 2 bonds per atoms
+create_box 13 cuboid bond/types 1 extra/bond/per/atom 4
+# appending atoms to the simulation box
+read_data initial_configuration${polymerIndex}.txt group all add append shift 0 0 0 # -${half_cyl_length} # for cylinder not centred at the origin
+# assigning mass to the atoms:
+mass * 1
+###################################################################################################
+
+
+###################################################################################################
+# Define Group:
+group 1 id 1:${numberOfMonomers}
+# group 2 id ${firstMonomerSecondRing}:${totalMonomers}
+###################################################################################################
+
+
+###################################################################################################
+# Set up interactions - start with just harmonic bonds
+
+## Between bonded atoms
+bond_style   fene
+# For style fene, specify:
+#   * bond type
+#   * K (energy/distance^2);
+#   * R0 (maximum distance)
+#   * epsilon (energy)
+#   * sigma (distance)
+variable max_distance equal 1.5*${sigma}
+bond_coeff   1   30.0   ${max_distance} 1 ${sigma}
+
+## Between non-bonded atoms
+pair_style      lj/cut ${cutoff}
+# pair_modify shift yes        # option to ensure energy is calculated correctly; for WCA potential
+#  pair_coeff for LJ, specify 4:
+#    * atom type interacting with
+#    * atom type
+#    * energy; epsilon
+#    * mean diameter of the two atom types; sigma
+#    * cutoff
+pair_coeff      * * 1.0 ${sigma} ${cutoff}
+pair_modify shift yes # useful to shift the LJ potential so that there is no attraction
+
+# special bonds: 1-2, 1-3, 1-4 interactions
+special_bonds   fene
+
+# setting up fixed reflecting walls:
+# fix walls all wall/reflect xlo EDGE xhi EDGE ylo EDGE yhi EDGE zlo EDGE zhi EDGE
+variable wall_sigma equal ${sigma}/2
+variable wall_cut equal ${wall_sigma}*2^(1/6)
+fix walls all wall/region cuboid lj126 1 ${wall_sigma} ${wall_cut}
+###################################################################################################
+
+
+###################################################################################################
+# Set up fixes and integrator
+
+# fix for performing atomic off lattice Monte Carlo:
+# - group ID: applies the fix to the atoms in the group
+# following options after gcmc:
+# - N: number of step interval to apply fix
+# - X: number of grand canonical exchanges
+# - M: average number of MC moves attempted
+# - type: atom type to be inserted in GC exchanges
+# - seed: random number generator seed
+# - T: temperature of GC reservoir
+# - mu: chemical potential of GC reservoir
+# - displace: max MC displacement
+print "Cutoff is: ${cutoff}"
+print "Seed is: ${seed}"
+# Setting up separate Monte Carlo fixes for the two polymers independent of one another:
+
+# counting number of atoms in the group:
+# compute count move_atoms count atom # returns array of counts for each atom type in the group
+variable total equal ${totalMonomers}
+print "Total moving atoms: ${total}"
+# move_atoms has 398 atoms
+fix mc all gcmc	1 0 ${total} 1 ${seed} 1 0 0.1 full_energy region cuboid # no other integrator needed
+# fix mc2 2 gcmc	1 0 200 2  ${seed} 1 0 0.1 full_energy region half_cyl_1 # no other integrator needed
+###################################################################################################
+
+
+###################################################################################################
+# Dump positions of atoms
+
+dump visual all custom 100 MC_visual${polymerIndex}.dump id type x y z # for visualization
+
+# dump vis 1 custom 10000 Arc0.dump id type x y z # positions of type 1 atoms for analysis
+# every 1000 time steps, each atom's id, type, x,y,z coords and x,y,z image flags are output.
+# image flags count how many times each atom has moved through a periodic boundary
+#
+#Dumping images taken every 100 timesteps
+# dump imageDump1 all image 10 images/image*.jpg type type
+
+# dumping atom positions:
+# dump position all custom 100 positions.dump id type x y z
+# dump position1 1 custom 100 positions1.dump id type x y z
+# dump position2 2 custom 100 positions2.dump id type x y z
+###################################################################################################
+
+###################################################################################################
+# Output thermodynamic info  (temperature, energy, pressure, etc.)
+thermo 100
+thermo_style   custom   step  temp  epair  emol etotal  press  vol
+###################################################################################################
+
+
+###################################################################################################
+# Output thermodynamic info to file 
+# variable time equal step
+# variable mytemp equal temp
+# variable myetot equal etotal
+# fix mythermofile all print 100 "${time} ${myetot}" file thermo_output.dat screen no
+###################################################################################################
+
+
+###################################################################################################
+# Compute section
+
+#centre of mass dump for type 1 atoms:
+compute CoM1 1 com
+variable t equal step
+variable c1_x equal c_CoM1[1]
+variable c1_y equal c_CoM1[2]
+variable c1_z equal c_CoM1[3]
+# fix CoM_File1 1 print 100 "${t} ${c1_x} ${c1_y} ${c1_z}" file com1.dat screen no
+
+#centre of mass dump for type 2 atoms:
+# compute CoM2 2 com
+# variable c2_x equal c_CoM2[1]
+# variable c2_y equal c_CoM2[2]
+# variable c2_z equal c_CoM2[3]
+# fix CoM_File2 2 print 100 "${t} ${c2_x} ${c2_y} ${c2_z}" file com2.dat screen no
+###################################################################################################
+
+
+
+###################################################################################################
+# run integration for a number of steps to equilibrate with soft potentials
+variable N equal 1000
+run $N # for randomness
+###################################################################################################
+
+###################################################################################################
+# printing the atoms positions to be used in the next section
+# will not restart the simulation exactly, but the initial state is random anyway
+write_data mc_configuration${polymerIndex}.txt nocoeff
+#################################################################################################
+
+################################################################################################################################################
+                                                    #    Langevin Dynamics Simulation
+################################################################################################################################################
+clear
+###################################################################################################
+# Boundaries and units  (use LJ units and periodic boundaries)
+
+units lj                 # use lennard-jones (i.e. dimensionless) units
+boundary f f f           # all boundaries are non-periodic and fixed
+processors * * *
+###################################################################################################
+
+
+###################################################################################################
+# Global Variables:
+# Remembered from script above
+###################################################################################################
+
+
+###################################################################################################
+# Neighbour List
+
+# Parameters: skin = extra distance beyond force cutoff
+neighbor 2 bin
+# neigh_modify every 10 delay 0 check yes # default settings
+comm_modify mode single cutoff 3.5
+###################################################################################################
+
+
+###################################################################################################
+# Setting up the regions
+
+
+# the cuboid simulation box
+region cuboid block -${halfLength} ${halfLength} -${halfLength} ${halfLength} -${halfLength} ${halfLength} # centred at the origin
+###################################################################################################
+
+
+
+###################################################################################################
+# Setting up simulation box and reading atom positions
+
+atom_style angle          # atoms with bonds, and angles
+# # creating simulation box from cuboid region
+# create_box 1 cuboid bond/types 1 extra/bond/per/atom 3
+# # reading atoms from data file:
+# read_data initial_configuration${polymerIndex}.txt group all add append shift 0 0 -${half_cyl_length} # for cylinders not centred at the origin
+# # includes: atom positoins, atom types, bonds, bond types, masses
+
+read_data mc_configuration${polymerIndex}.txt
+###################################################################################################
+
+
+###################################################################################################
+# Set up interactions - start with just harmonic bonds
+
+## Between bonded atoms
+bond_style   fene
+# For style fene, specify:
+#   * bond type
+#   * K (energy/distance^2);
+#   * R0 (maximum distance)
+#   * epsilon (energy)
+#   * sigma (distance)
+variable max_distance equal 1.5*${sigma}
+bond_coeff   1   30.0   ${max_distance} 1 ${sigma}
+
+
+## Between non-bonded atoms
+pair_style      lj/cut ${cutoff}
+# pair_modify shift yes        # option to ensure energy is calculated correctly; for WCA potential
+#  pair_coeff for LJ, specify 4:
+#    * atom type interacting with
+#    * atom type
+#    * energy; epsilon
+#    * mean diameter of the two atom types; sigma
+#    * cutoff
+pair_coeff      * * 1.0 ${sigma} ${cutoff}
+pair_modify shift yes # useful to shift the LJ potential so that there is no attraction
+
+# special bonds: 1-2, 1-3, 1-4 interactions
+special_bonds   fene
+###################################################################################################
+
+
+###################################################################################################
+# Type groups:
+group 1 id 1:${numberOfMonomers}
+# group 2 id ${firstMonomerSecondRing}:${totalMonomers}
+###################################################################################################
+
+###################################################################################################
+#updating fixes and integrator:
+
+timestep 0.01 
+
+# variable seed equal 2500 # seed for the langevin white noise
+fix integrator all nve
+fix langevin1 all langevin   1.0 1.0 1.0 ${seed}  # langevin thermostat
+
+# setting up fixed reflecting walls:
+# fix walls all wall/reflect xlo EDGE xhi EDGE ylo EDGE yhi EDGE zlo EDGE zhi EDGE
+variable wall_sigma equal ${sigma}/2
+variable wall_cut equal ${wall_sigma}*2^(1/6)
+fix walls all wall/region cuboid lj126 1 ${wall_sigma} ${wall_cut}
+###################################################################################################
+
+
+###################################################################################################
+# New dump:
+dump dump1 all custom 100000 visual${polymerIndex}.dump id type x y z # for visualization
+# dump position1 1 custom 100 positions1.dump id type x y z # positions printed for the monomer density/distribution
+# dump position2 2 custom 100 positions2.dump id type x y z
+# dump_modify position1 append yes
+# dump_modify position2 append yes
+###################################################################################################
+
+
+###################################################################################################
+# Compute section
+
+#centre of mass dump for type 1 atoms:
+compute CoM1 1 com
+variable t equal step
+variable c1_x equal c_CoM1[1]
+variable c1_y equal c_CoM1[2]
+variable c1_z equal c_CoM1[3]
+#fix CoM_File1 1 print 1000 "${t} ${c1_x} ${c1_y} ${c1_z}" file com1.dat screen no
+
+#centre of mass dump for type 2 atoms:
+#compute CoM2 2 com
+#variable c2_x equal c_CoM2[1]
+#variable c2_y equal c_CoM2[2]
+#variable c2_z equal c_CoM2[3]
+#fix CoM_File2 2 print 1000 "${t} ${c2_x} ${c2_y} ${c2_z}" file com2.dat screen no
+###################################################################################################
+
+
+###################################################################################################
+# Output thermodynamic info  (temperature, energy, pressure, etc.)
+thermo 10000
+thermo_style   custom   step  temp  epair  emol etotal  press  vol
+###################################################################################################
+
+###################################################################################################
+# now do a longer run: for relaxing the system
+variable N equal 10^7
+run $N
+###################################################################################################
+
+
+###################################################################################################
+# printing the state, in case one wanst to continue from here:
+write_data final_configuration${polymerIndex}.txt

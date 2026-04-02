@@ -1,0 +1,463 @@
+#####################################################################################
+# LAMMPS Script to perform Monte Carlo and Langevin Dynamics of two polymers in a shrinking cylinder in order to create mixed initial states free of any concatenations
+# Also incorporating the "replication-like" algorithm: Each monomer of a polymer is weakly bonded to the corresponding monomer in the other polymer
+# It is like the algorithm when simulating replication of chromosomes: bonds of a fully-bonded pair of polymers are broken one by one
+# But in this case, no bonds are broken.
+# Once the bonds are introduced, the state should look something like a hamster's wheel
+#####################################################################################
+
+################################################################################################################################################
+                                                    #    Monte Carlo Random Initialization
+# The Monte Carlo dynamics simulation of the box before deformation is introduced. This will relax the stretched cross links introduced in the start
+################################################################################################################################################
+
+
+###################################################################################################
+# Boundaries and units  (use LJ units and periodic boundaries)
+
+units lj                 # use lennard-jones (i.e. dimensionless) units
+boundary f f f           # all boundaries are non-periodic and fixed; default is PBC
+processors * * *
+####################################################################################################
+
+
+####################################################################################################
+# Variables:
+variable sigma equal 1
+variable cutoff equal ${sigma}*2^(1/6)
+# variable numberOfMonomers equal 200
+variable numberOfPolymers equal 2
+variable halfLength equal ${numberOfMonomers}/2
+variable totalMonomers equal ${numberOfPolymers}*${numberOfMonomers}
+
+variable initialRadius equal ceil(${numberOfMonomers}/2/PI)+5 # since 2 * PI * R = no Of Monomers * 1 (eq bond distance); +5 for buffer distance from the box wall
+variable initialAxisLength equal 2*v_initialRadius
+variable initialDiameter equal 2*${initialRadius}
+####################################################################################################
+
+
+###################################################################################################
+# Neighbour List
+
+# Parameters: skin = extra distance beyond force cutoff
+neighbor 2 bin
+neigh_modify every 10 delay 0 check yes # default settings
+comm_modify mode single cutoff 3.5 # cutoff radius for atoms communicated across multiple processors; should be greater than all interaction ranges
+
+###################################################################################################
+
+
+###################################################################################################
+# Setting up the regions
+
+
+# the cuboid encompassing the cylinder:
+variable halfAxisLength equal ${initialAxisLength}/2
+region cuboid block -${initialRadius} ${initialRadius} -${initialRadius} ${initialRadius} -${halfAxisLength} ${halfAxisLength}
+# specifying cylindrical region along z direction with radius 2 (1.6 + 0.4 wall) and length 16.8 (16 + 2 * 0.4 wall)
+# region ID cylinder <dim> <coord1> <coord2> <radius> <axisLo> <axisHi>
+region cylinder cylinder z 0 0 ${initialRadius} -${halfAxisLength} ${halfAxisLength} side in units box
+###################################################################################################
+
+###################################################################################################
+# Setting up simulation box and reading atom positions
+
+atom_style angle          # atoms with bonds, and angles
+
+# creating the simulation box in shape of the region: 2 atomype, 2 bond type (inter polymer), 3 bonds per atoms (cross linked atoms)
+create_box 2 cylinder bond/types 2 extra/bond/per/atom 4
+# reading atoms from the initial configuration file:
+read_data initial_configuration.txt group all add append # adding both rings
+
+
+# assigning mass to the atoms:
+mass * 1
+# includes: atom positoins, atom types, bonds, bond types, masses
+###################################################################################################
+
+###################################################################################################
+# Grouping the atoms based on type
+group 1 type 1
+group 2 type 2
+group move_atoms union 1 2
+###################################################################################################
+
+###################################################################################################
+# adding extra bonds between the two polymers: one between each pair of corresponding monomer
+# create_bonds single/bond btype batom1 atom2
+# special: to create a internal list of special (1-2, 1-3, 1-4) bonds or not
+variable offset equal 0 # The monomer offset for the corresponding atoms;
+# such that the ith atom of polymer 1 is bonded to the (i+offset)th atom of polymer 2
+
+# Creating bonds across each coresponding pair of monomers:
+variable    N_1 equal ${numberOfMonomers}-1 # one less than number of monomers as an upper limit to loop
+variable    i loop 1 ${N_1} # Iterating over all monomoers in the first polymer
+label   MC_loop
+# Calculating index of the corresponding monomer:
+variable    j equal ($i-1+${offset})%${numberOfMonomers}+1+${numberOfMonomers}
+# using modulo such the result is always positive
+print "Bonding $i and $j" file bond_log.lammps
+# Making bonds
+create_bonds single/bond 2 $i $j special no
+next    i
+jump    SELF MC_loop # should be skipped after i exceeds the number of monomers
+# Creating the last bond with special yes:
+variable    j equal (${numberOfMonomers}-1+${offset})%${numberOfMonomers}+1+${numberOfMonomers}
+create_bonds single/bond 2 ${numberOfMonomers} $j special yes
+print "create_bonds loop exited successfully."
+variable    j delete
+# Setting the special keyword to yes only in the last bond creation to efficiently 
+# create internal list of special bonds (1-2, 1-3, 1-4) for all bonds at once
+
+# write_data bond_test.txt nocoeff # Writing the state of the system to see if the bonds have been correctly formed; debugging
+###################################################################################################
+
+###################################################################################################
+# Adding excluded volume interactions
+# Between non-bonded atoms
+pair_style      lj/cut ${cutoff}
+# pair_modify shift yes        # option to ensure energy is calculated correctly; for WCA potential
+#  pair_coeff for LJ, specify 4:
+#    * atom type interacting with
+#    * atom type
+#    * energy; epsilon
+#    * mean diameter of the two atom types; sigma
+#    * cutoff
+pair_coeff      * * 1.0 ${sigma} ${cutoff}
+pair_modify shift yes # useful to shift the LJ potential so that there is no attraction
+
+# special bonds: 1-2, 1-3, 1-4 interactions
+special_bonds   lj 1.0 1.0 1.0
+
+# Adding bond interactions: harmonic to relax stretched bonds
+bond_style   harmonic 
+# For style harmonic, specify:
+#   * bond type
+#   * K (energy/distance^2) 
+#   * R0 (distance)
+bond_coeff   1   500.0   1
+bond_coeff   2   10.0    3 # For the inter polymer bonds
+###################################################################################################
+
+
+###################################################################################################
+# Set up fixes and integrator
+
+# fix for performing atomic off lattice Monte Carlo:
+# - group ID: applies the fix to the atoms in the group
+# following options after gcmc:
+# - N: number of step interval to apply fix
+# - X: number of grand canonical exchanges
+# - M: average number of MC moves attempted
+# - type: atom type to be inserted in GC exchanges
+# - seed: random number generator seed
+# - T: temperature of GC reservoir
+# - mu: chemical potential of GC reservoir
+# - displace: max MC displacement
+print "Cutoff is: ${cutoff}"
+print "Seed is: ${seed}"
+variable total equal ${totalMonomers}-${numberOfPolymers}*2
+print "Total moving atoms: ${total}"
+fix mc move_atoms gcmc	1 0 ${total} 1 ${seed} 1 0 0.1 full_energy region cylinder
+# Debugging: calculating Monte Carlo acceptance ratio
+variable acc_ratio equal f_mc[2]/(f_mc[1]+0.000000001) # Adding the small number in the denominator to avoid divide by 0 error
+###################################################################################################
+
+###################################################################################################
+# # Setting up the fix recenter command to keep both polymers' z-coordinate of the CoM fixed at 0
+# # fix ID groupID recenter x y z keywords args
+# fix recenter1 1 recenter NULL NULL 0.0
+# fix recenter2 2 recenter NULL NULL 0.0
+###################################################################################################
+
+###################################################################################################
+# Dump files:
+dump dump1 all custom 1000 mc_visual.dump id type x y z # for visualization
+
+# Thermo:
+thermo 1000
+thermo_style   custom   step  temp  epair  emol etotal  press  vol v_acc_ratio
+###################################################################################################
+
+###################################################################################################
+# Run
+variable n equal 10^4
+print "Total Iterations before deformation starts: $n"
+run $n
+
+write_data mc_configuration.txt nocoeff 
+###################################################################################################
+
+################################################################################################################################################
+                                                    #    Langevin Deformation
+# The Langevin dynamics simulation where the box is deformed
+################################################################################################################################################
+# quit
+clear
+###################################################################################################
+# Boundaries and units  (use LJ units and periodic boundaries)
+
+units lj                 # use lennard-jones (i.e. dimensionless) units
+boundary f f f           # all boundaries are non-periodic and fixed; default is PBC
+processors * * *
+####################################################################################################
+
+
+####################################################################################################
+# Variables:
+variable deformInterval equal 2000 # The interval of iterations at which the box is deformed; in discrete steps
+
+# variable intermediateAxisLength equal 98.136 # This is where I am losing the atoms; 98.936-0.8
+
+# The variable finalRadius is accepted from the command line
+variable finalAxisLength equal 10*${finalRadius}
+
+variable wall equal ${sigma}/2
+print	"Wall thickness: ${wall}"
+# Adding a margin to the initial dimensions so that the system does not blow up when walls are imposed
+variable initialEffLength equal ${initialAxisLength}+2*${wall}
+variable initialEffRadius equal ${initialRadius}+${wall}
+
+variable radiusDifference equal ${finalRadius}-${initialEffRadius}
+variable lengthDifference equal ${finalAxisLength}-${initialEffLength}
+
+variable lo_delta equal -${lengthDifference}/2
+variable hi_delta equal ${lengthDifference}/2
+
+
+variable desiredStepDelta equal 0.005*${sigma} # the size of the delta at each deformation event
+
+# The number of iterations required to achieve the total deformation:
+variable N_axis equal round(abs(${hi_delta})/${desiredStepDelta})*${deformInterval}
+variable N_radius equal ceil((abs(${radiusDifference})/${desiredStepDelta})*${deformInterval}) # an extra deformInterval added so that it can terminate after verifying that the finalRadius is reached
+
+# Choosing maximum of N_axis and N_radius:
+variable N equal ${N_axis}
+if "$N < ${N_radius}" then &
+    "variable N delete" &
+    "variable N equal ${N_radius}"
+
+# rounding N up to a multiple of deformInterval:
+variable N equal ceil($N/${deformInterval})*${deformInterval}
+# Note: This may cause the the final achieved box dimensions to be slightly smaller than the desired dimensions.
+#       This difference should be negligible, and should not affect the initial state much. 
+#       Anyway, the segregation run will have the proper dimension.
+
+variable trueAxisStepDelta equal abs(${hi_delta})/(${N_axis}/${deformInterval}) # the actual step delta that LAMMPS will use
+variable trueRadiusStepDelta equal abs(${radiusDifference})/(${N_radius}/${deformInterval})
+####################################################################################################
+
+
+###################################################################################################
+# Neighbour List
+
+# Parameters: skin = extra distance beyond force cutoff
+neighbor 2 bin
+neigh_modify every 10 delay 0 check yes # default settings
+comm_modify mode single cutoff 3.5 # cutoff radius for atoms communicated across multiple processors; should be greater than all interaction ranges
+
+# Turning off spatial sorting of atoms to avoid error:
+# atom_modify sort 0 1
+###################################################################################################
+
+
+###################################################################################################
+# Setting up the regions
+
+
+# the cuboid encompassing the cylinder:
+variable halfAxisLength equal ${initialEffLength}/2
+region cuboid block -${initialEffRadius} ${initialEffRadius} -${initialEffRadius} ${initialEffRadius} -${halfAxisLength} ${halfAxisLength}
+
+# specifying cylindrical region along z direction
+# region ID cylinder <dim> <coord1> <coord2> <radius> <axisLo> <axisHi>
+region cylinder cylinder z 0 0 ${initialEffRadius} -${halfAxisLength} ${halfAxisLength} side in units box
+###################################################################################################
+
+###################################################################################################
+# Setting up simulation box and reading atom positions
+
+atom_style angle          # atoms with bonds, and angles
+
+# creating the simulation box in shape of the region: 1 atomype, 1 bond type, 2 bonds per atoms
+create_box 2 cylinder bond/types 2 extra/bond/per/atom 4
+# creating the simulation box from the initial configuration file
+read_data mc_configuration.txt group all add append # adding both rings
+# this should include the ghost atoms and their bonds as well
+
+# assigning mass to the atoms:
+mass * 1
+# includes: atom positions, atom types, bonds, bond types, masses
+###################################################################################################
+
+
+###################################################################################################
+# Defining groups
+group 1 type 1
+group 2 type 2
+group move_atoms union 1 2
+###################################################################################################
+
+
+###################################################################################################
+# Adding excluded volume interactions
+# Between non-bonded atoms
+pair_style      lj/cut ${cutoff}
+# pair_modify shift yes        # option to ensure energy is calculated correctly; for WCA potential
+#  pair_coeff for LJ, specify 4:
+#    * atom type interacting with
+#    * atom type
+#    * energy; epsilon
+#    * mean diameter of the two atom types; sigma
+#    * cutoff
+pair_coeff      * * 1.0 ${sigma} ${cutoff}
+
+pair_modify shift yes # useful to shift the LJ potential so that there is no attraction
+
+# Adding bond interactions: FENE and harmonic
+# special bonds: to include/exclude pairwise interactions for 1-2, 1-3, 1-4 bonded atoms
+special_bonds   fene # sets lj to 0 1 1
+
+bond_style   hybrid harmonic fene table spline 1000
+# For style fene, specify: # For chain connectivity
+#   * bond type
+#   * K (energy/distance^2);
+#   * R0 (maximum distance)
+#   * epsilon (energy)
+#   * sigma (distance)
+variable max_distance equal 1.5*${sigma}
+bond_coeff   1   fene	30.0   ${max_distance} 1 ${sigma} # chain connectivity
+
+# For style table, specify: # To include the LJ interactions between atoms bonded by type 2
+#   * bond type
+#   * file name
+#   * section keyword (present in the file)
+bond_coeff   2  table      ../../harmWCA.table REPLICATION
+# Note: If instead of this harmonic+WCA potential, we used just the weak harmonic potential, then
+#       the two chains might not "see" each other; aka chain crossing can occur. Test this?
+###################################################################################################
+
+
+###################################################################################################
+# # Langevin Fixes and Integrator:
+
+# no integrator: lost atoms do not raise an error
+# langevin thermostat + integrator
+# fix ID group-ID langevin <Temp-start> <Temp-stop> <damp> <seed>
+timestep 0.005
+fix langevin1 move_atoms langevin  1.0  1.0  1.0 ${seed}
+fix integrator move_atoms nve
+
+# Adding walls:
+variable wall_sigma equal ${wall}
+variable wall_cut equal ${wall_sigma}*2^(1/6)
+fix cyl_walls move_atoms wall/region cylinder lj126 1 ${wall_sigma} ${wall_cut}
+###################################################################################################
+
+###################################################################################################
+# Dump files:
+dump 	dump1 all custom 2000 visual.dump id type x y z # for visualization
+# dump_modify dump1 every 10000
+# variable blow_up equal 4161000
+# dump	debug all custom 10 debug.dump id type x y z # Visualizing the system just before it blows up
+# dump_modify	debug delay 4161000
+
+# Thermo:
+# Thermo:
+thermo 10000
+# Defining my own version of the bond energy (per bond): shifted so that minimum is at 0
+# This is useful to spot anomalies by checking if the energy is too high above 2 kbT
+# variable min_energy equal 13.60175 # minimum bond energy in kbT units for K = 30 and R_0 = 1.5 sigma; sigma = 0.8
+variable min_energy equal 20.20257 # minimum bond energy in kbT units for K = 30 and R_0 = 1.5 sigma; sigma = 1
+variable my_emol equal emol-${min_energy} # shifting emol
+variable my_etot equal etotal-${min_energy}
+# thermo_style   custom   step  temp  epair  v_my_emol v_my_etot  press  vol
+###################################################################################################
+
+###################################################################################################
+# Run
+print "Total Iterations for deformation: ${N}"
+
+# initializing variables of current radius and length; with the wall added
+variable currentHalfLength equal ${initialEffLength}/2
+variable currentRadius equal ${initialEffRadius}
+variable finalHalfLength equal ${finalAxisLength}/2
+thermo_style       custom   step  temp  epair  v_my_emol v_my_etot  press  vol v_currentHalfLength v_currentRadius
+
+# Setting up a loop of broken runs:
+label	loop
+# redefining the axis length if required:
+if "${currentHalfLength} > ${finalHalfLength}" then &
+    "variable currentHalfLength equal ${currentHalfLength}-${trueAxisStepDelta}"
+
+# redefining the radius if required:
+if "${currentRadius} > ${finalRadius}" then &
+    "variable currentRadius equal ${currentRadius}-${trueRadiusStepDelta}"
+
+# redefining cylinder:
+region 	cylinder delete
+region 	cylinder cylinder z 0 0 ${currentRadius} -${currentHalfLength} ${currentHalfLength} side in units box
+
+# Assuming the fix wall/region gets updated with the new region automatically since it has the same name
+# Updating the simulation box too:
+change_box      all x final -${currentRadius} ${currentRadius} y final -${currentRadius} ${currentRadius} z final -${currentHalfLength} ${currentHalfLength}
+
+variable timeStep equal step
+#if "${timeStep} >= ${blow_up}" then &
+#	"dump_modify dump1 every 10"
+run		2000 start 0 stop ${N} pre yes post no
+
+# variable timeStep equal step
+print "Step : ${timeStep}, N : ${N}"
+# exit control:
+if "${timeStep} >= ${N}" then "jump SELF break"
+if "${timeStep} == ${N}" then "print 'They are equal!'"
+# else:
+jump	SELF loop
+label	break
+
+###################################################################################################
+
+
+###################################################################################################
+# Deleting the extra bonds and atoms:
+# delete_bonds all bond 2 remove # permanently removed interpolymer bonds
+# delete_bonds all bond 3 remove # permanently removed fixing bonds
+# delete_atoms group ghost
+# Keeping the extra bonds and atoms to run a longer simulation for generating sequential mixed states
+###################################################################################################
+
+###################################################################################################
+# redefining cylinder one last time to match the desired dimensions.
+# It is possible that the dimensions of final cylinder are slightly smaller than the desired dimensions
+# owing to the discrete stepsize of shrinking
+variable currentHalfLength equal ${finalHalfLength}
+variable currentRadius equal ${finalRadius}
+region 	cylinder delete
+region 	cylinder cylinder z 0 0 ${finalRadius} -${finalHalfLength} ${finalHalfLength} side in units box
+# This should be bigger than or equal to the last cylinder; the system should not blow up
+
+# Assuming the fix wall/region gets updated with the new region automatically since it has the same name
+# Updating the simulation box too:
+change_box      all x final -${finalRadius} ${finalRadius} y final -${finalRadius} ${finalRadius} z final -${finalHalfLength} ${finalHalfLength}
+###################################################################################################
+
+###################################################################################################
+write_data	shrunk_configuration.txt pair ij
+write_restart	shrunk_binary.restart
+
+# Deactivating the previous dump:
+undump  dump1
+# Running the simulation for the distributions separately, for testing.
+# Running LD for a short time to plot monomer density of the system; to ensure the system is adequately relaxed
+dump 	mon_density move_atoms custom 4000 distribution_positions.dump id type x y z
+if "${numberOfMonomers} == 500" then &
+    "variable eq_run equal 2.5*10^8" &
+else &
+    "variable eq_run equal 4*10^7" # 5 times the relaxation time: 8*10^6; tau_0 = 200
+
+run ${eq_run}
+
+# Writing the final configuration to a file:
+write_data ../langevin_mixed_state_${run}.txt nocoeff
+###################################################################################################

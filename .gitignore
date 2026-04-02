@@ -1,0 +1,24 @@
+# Ignoring all data files for now:
+*.txt
+*.dump
+*.restart
+!README.txt
+*.png
+
+# Ignoring all object files and executables:
+*.o
+*.out
+
+# Ignoring all test files:
+*test*
+
+# Ignoring temporary files:
+*.tmp
+*:Zone.Identifier
+
+# Ignoring pycache and other Python-related files:
+__pycache__/
+
+# Ignoring VS Code files:
+.vscode/
+*.code-workspace

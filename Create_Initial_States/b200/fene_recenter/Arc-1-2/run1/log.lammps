@@ -1,0 +1,83 @@
+LAMMPS (23 Jun 2022 - Update 4)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+#####################################################################################
+# LAMMPS Script to perform Monte Carlo and Langevin Dynamics of two polymers in a shrinking cylinder in order to create mixed initial states free of any concatenations
+# Incorporating FENE bonds after an initial period of relaxation with harmonic springs
+#####################################################################################
+
+################################################################################################################################################
+                                                    #    Monte Carlo Initialization
+# The Monte Carlo dynamics simulation of the box before deformation is introduced. This will relax the stretched cross links introduced in the start
+################################################################################################################################################
+
+
+###################################################################################################
+# Boundaries and units  (use LJ units and periodic boundaries)
+
+units lj                 # use lennard-jones (i.e. dimensionless) units
+boundary f f f           # all boundaries are non-periodic and fixed; default is PBC
+processors * * *
+####################################################################################################
+
+
+####################################################################################################
+# Variables:
+variable sigma equal 1
+variable cutoff equal ${sigma}*2^(1/6)
+variable cutoff equal 1*2^(1/6)
+# variable numberOfMonomers equal 200
+variable numberOfPolymers equal 2
+variable halfLength equal ${numberOfMonomers}/2
+variable halfLength equal 200/2
+variable totalMonomers equal ${numberOfPolymers}*${numberOfMonomers}
+variable totalMonomers equal 2*${numberOfMonomers}
+variable totalMonomers equal 2*200
+
+variable initialRadius equal ceil(${numberOfMonomers}/2/PI)+5 # since 2 * PI * R = no Of Monomers * 1 (eq bond distance); +5 for buffer distance from the box wall
+variable initialRadius equal ceil(200/2/PI)+5 
+variable initialAxisLength equal 2*v_initialRadius
+variable initialDiameter equal 2*${initialRadius}
+variable initialDiameter equal 2*37
+####################################################################################################
+
+
+###################################################################################################
+# Neighbour List
+
+# Parameters: skin = extra distance beyond force cutoff
+neighbor 2 bin
+neigh_modify every 10 delay 0 check yes # default settings
+comm_modify mode single cutoff 3.5 # cutoff radius for atoms communicated across multiple processors; should be greater than all interaction ranges
+
+###################################################################################################
+
+
+###################################################################################################
+# Setting up the regions
+
+
+# the cuboid encompassing the cylinder:
+variable halfAxisLength equal ${initialAxisLength}/2
+variable halfAxisLength equal 74/2
+region cuboid block -${initialRadius} ${initialRadius} -${initialRadius} ${initialRadius} -${halfAxisLength} ${halfAxisLength}
+region cuboid block -37 ${initialRadius} -${initialRadius} ${initialRadius} -${halfAxisLength} ${halfAxisLength}
+region cuboid block -37 37 -${initialRadius} ${initialRadius} -${halfAxisLength} ${halfAxisLength}
+region cuboid block -37 37 -37 ${initialRadius} -${halfAxisLength} ${halfAxisLength}
+region cuboid block -37 37 -37 37 -${halfAxisLength} ${halfAxisLength}
+region cuboid block -37 37 -37 37 -37 ${halfAxisLength}
+region cuboid block -37 37 -37 37 -37 37
+# specifying cylindrical region along z direction with radius 2 (1.6 + 0.4 wall) and length 16.8 (16 + 2 * 0.4 wall)
+# region ID cylinder <dim> <coord1> <coord2> <radius> <axisLo> <axisHi>
+region cylinder cylinder z 0 0 ${initialRadius} -${halfAxisLength} ${halfAxisLength} side in units box
+region cylinder cylinder z 0 0 37 -${halfAxisLength} ${halfAxisLength} side in units box
+region cylinder cylinder z 0 0 37 -37 ${halfAxisLength} side in units box
+region cylinder cylinder z 0 0 37 -37 37 side in units box
+###################################################################################################
+
+###################################################################################################
+# Setting up simulation box and reading atom positions
+
+atom_style bond          # atoms with bonds, and angles
+ERROR: Unrecognized atom style 'bond' is part of the MOLECULE package which is not enabled in this LAMMPS binary. (src/atom.cpp:708)
+Last command: atom_style bond          # atoms with bonds, and angles

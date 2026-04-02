@@ -1,0 +1,39 @@
+# This is a matplotlib style sheet that stores the values of rcParams that can be read to style plots
+
+# Text styles:
+axes.titlesize: 14
+axes.titleweight: bold
+# axes.labelsize: 16
+# axes.labelweight: bold
+font.weight: bold
+axes.formatter.use_mathtext: True
+axes.formatter.limits: -2, 4
+
+# Plotting lines:
+axes.linewidth: 1
+
+# Grid:
+axes.grid: True
+grid.alpha: 0.7
+grid.linewidth: 0.6
+grid.linestyle: --
+
+# Legend:
+legend.fontsize: 10
+
+
+# Ticks:
+xtick.labelsize: 12
+
+ytick.labelsize: 12
+
+
+
+# Figure:
+figure.figsize: 12, 8
+figure.titleweight: bold
+figure.titlesize: 18
+figure.labelweight: bold
+figure.labelsize: 18
+# figure.constrained_layout.hspace: 0.2
+figure.autolayout: True

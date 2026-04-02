@@ -1,0 +1,403 @@
+#####################################################################################
+# LAMMPS Script to perform Langevin (faster) of two polymers in a cylinder in order to find segregation time
+#####################################################################################
+
+
+# ################################################################################################################################################
+#                                                     #    Monte Carlo Random Initialization
+# # slower than Langevin, but using MC so that the the initial configuration relaxes to a state that does not blow up
+# ################################################################################################################################################
+
+# ###################################################################################################
+# # Boundaries and units  (use LJ units and periodic boundaries)
+
+# units lj                 # use lennard-jones (i.e. dimensionless) units
+# boundary f f f           # all boundaries are non-periodic and fixed
+# processors * * *
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Global Variables:
+# variable sigma equal 0.8
+# variable cutoff equal ${sigma}*2^(1/6)
+# # variable seed equal 385788725
+# # variables to set the dimensions:
+# if "${numberOfMonomers} == 500" then &
+#     "variable radius equal 3.5" &
+# else &
+#     "variable radius equal 2.5"
+# variable diameter equal 2*${radius}
+# variable axisLength equal 10*${radius}
+# variable wall equal 0.4
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Neighbour List
+
+# # Parameters: skin = extra distance beyond force cutoff
+# neighbor 2 bin
+# # neigh_modify every 10 delay 0 check yes # default settings
+# comm_modify mode single cutoff 3.5
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Setting up the regions
+
+
+# # the cuboid encompassing the cylinder:
+# region cuboid block 0 ${effDiameter} 0 ${effDiameter} 0 ${axisLength}
+# # specifying cylindrical region along z direction with radius 3 (2.5 + 0.5 wall) and length 26 (25 + 2 * 0.5 wall)
+# region cylinder cylinder z ${radius} ${radius} ${radius} ${wall} ${paddedLength} side in units box # wall buffer ignored for the monte carlo
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Setting up simulation box and reading atom positions
+
+# atom_style angle          # atoms with bonds
+
+# # creating the simulation box in shape of the region: 1 atomype, 1 bond type, 2 bonds per atoms
+# # create_box 1 cuboid bond/types 1 extra/bond/per/atom 2
+# # appending atoms to the simulation box
+# read_data initial_configuration.txt group all
+# # assigning mass to the atoms:
+# mass * 1
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Define Group:
+# group 1 id 1:200
+# group 2 id 201:400
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Set up interactions - start with just harmonic bonds
+
+# ## Between bonded atoms
+# bond_style   harmonic 
+# # For style harmonic, specify:
+# #   * bond type
+# #   * K (energy/distance^2) 
+# #   * R0 (distance)
+# bond_coeff   1   500.0   1
+
+# ## Between non-bonded atoms
+# pair_style      lj/cut ${cutoff}
+# # pair_modify shift yes        # option to ensure energy is calculated correctly; for WCA potential
+# #  pair_coeff for LJ, specify 4:
+# #    * atom type interacting with
+# #    * atom type
+# #    * energy; epsilon
+# #    * mean diameter of the two atom types; sigma
+# #    * cutoff
+# pair_coeff      * * 1.0 ${sigma} ${cutoff}
+# pair_modify shift yes # useful to shift the LJ potential so that there is no attraction
+
+# # special bonds: 1-2, 1-3, 1-4 interactions
+# special_bonds   lj 1.0 1.0 1.0
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Set up fixes and integrator
+
+# # fix for performing atomic off lattice Monte Carlo:
+# # - group ID: applies the fix to the atoms in the group
+# # following options after gcmc:
+# # - N: number of step interval to apply fix
+# # - X: number of grand canonical exchanges
+# # - M: average number of MC moves attempted
+# # - type: atom type to be inserted in GC exchanges
+# # - seed: random number generator seed
+# # - T: temperature of GC reservoir
+# # - mu: chemical potential of GC reservoir
+# # - displace: max MC displacement
+# print "Cutoff is: ${cutoff}"
+# print "Seed is: ${seed}"
+# # Setting up separate Monte Carlo fixes for the two polymers independent of one another:
+
+# # counting number of atoms in the group:
+# # compute count move_atoms count atom # returns array of counts for each atom type in the group
+# variable total equal 400
+# print "Total moving atoms: ${total}"
+# # move_atoms has 398 atoms
+# fix mc all gcmc	1 0 ${total} 1 ${seed} 1 0 0.1 full_energy region cylinder # no other integrator needed
+# # fix mc2 2 gcmc	1 0 200 2  ${seed} 1 0 0.1 full_energy region half_cyl_1 # no other integrator needed
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Dump positions of atoms
+
+# # dump dump1 all custom 1000 Arc-Loop4_MC.dump id type x y z # for visualization
+
+# # dump vis 1 custom 10000 Arc0.dump id type x y z # positions of type 1 atoms for analysis
+# # every 1000 time steps, each atom's id, type, x,y,z coords and x,y,z image flags are output.
+# # image flags count how many times each atom has moved through a periodic boundary
+# #
+# #Dumping images taken every 100 timesteps
+# # dump imageDump1 all image 10 images/image*.jpg type type
+
+# # dumping atom positions:
+# # dump position all custom 100 positions.dump id type x y z
+# # dump position1 1 custom 100 positions1.dump id type x y z
+# # dump position2 2 custom 100 positions2.dump id type x y z
+# ###################################################################################################
+
+# ###################################################################################################
+# # Output thermodynamic info  (temperature, energy, pressure, etc.)
+# thermo 100
+# thermo_style   custom   step  temp  epair  emol etotal  press  vol
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Output thermodynamic info to file 
+# # variable time equal step
+# # variable mytemp equal temp
+# # variable myetot equal etotal
+# # fix mythermofile all print 100 "${time} ${myetot}" file thermo_output.dat screen no
+# ###################################################################################################
+
+
+# ###################################################################################################
+# # Compute section
+
+# #centre of mass dump for type 1 atoms:
+# compute CoM1 1 com
+# variable t equal step
+# variable c1_x equal c_CoM1[1]
+# variable c1_y equal c_CoM1[2]
+# variable c1_z equal c_CoM1[3]
+# fix CoM_File1 1 print 100 "${t} ${c1_x} ${c1_y} ${c1_z}" file com1.dat screen no
+
+# #centre of mass dump for type 2 atoms:
+# compute CoM2 2 com
+# variable c2_x equal c_CoM2[1]
+# variable c2_y equal c_CoM2[2]
+# variable c2_z equal c_CoM2[3]
+# fix CoM_File2 2 print 100 "${t} ${c2_x} ${c2_y} ${c2_z}" file com2.dat screen no
+# ###################################################################################################
+
+
+
+# ###################################################################################################
+# # run integration for a number of steps to equilibrate with soft potentials
+# variable N equal 1000
+# run $N # for randomness
+# ###################################################################################################
+
+# ###################################################################################################
+# # printing the atoms positions to be used in the next section
+# # will not restart the simulation exactly, but the initial state is random anyway
+# write_data mc_configuration.txt nocoeff
+# ###################################################################################################
+
+################################################################################################################################################
+                                                    #    Langevin Dynamics Simulation
+################################################################################################################################################
+# quit
+# clear # clearing earlier state
+
+###################################################################################################
+# Boundaries and units  (use LJ units and periodic boundaries)
+
+units lj                 # use lennard-jones (i.e. dimensionless) units
+boundary f f f           # all boundaries are non-periodic and fixed
+processors * * *
+###################################################################################################
+
+
+###################################################################################################
+# Global Variables:
+variable sigma equal 1
+variable cutoff equal ${sigma}*2^(1/6)
+# variable seed equal 385788725
+variable halfLength equal ${numberOfMonomers}/2
+variable totalMonomers equal 2*${numberOfMonomers}
+variable firstMonomerSecondRing equal ${numberOfMonomers}+1
+# variables to set the dimensions:
+# Accepting "radius" from the command line
+variable diameter equal 2*${radius}
+if "${numberOfMonomers} == 200" then &
+    "variable axisLength equal 500" &
+else &
+    "variable axisLength equal 1000"
+variable wall equal ${sigma}/2
+variable halfAxisLength equal ${axisLength}/2
+###################################################################################################
+
+
+###################################################################################################
+# Neighbour List
+
+# Parameters: skin = extra distance beyond force cutoff
+neighbor 2 bin
+# neigh_modify every 10 delay 0 check yes # default settings
+comm_modify mode single cutoff 3.5
+###################################################################################################
+
+
+###################################################################################################
+# Setting up the regions
+
+# # For a corner of the cuboid at the origin:
+# # the cuboid encompassing the cylinder:
+# region cuboid block 0 ${effDiameter} 0 ${effDiameter} 0 ${axisLength}
+# # specifying cylindrical region along z direction with radius 2.9 (2.5 + 0.4 wall) and length 25.8 (25 + 2 * 0.4 wall)
+# region cylinder cylinder z ${radius} ${radius} ${radius} 0 ${axisLength} side in units box
+
+# The cuboid box centred at origin:
+region cuboid block -${radius} ${radius} -${radius} ${radius} -${halfAxisLength} ${halfAxisLength}
+# Cylindrical region:
+region cylinder cylinder z 0 0 ${radius} -${halfAxisLength} ${halfAxisLength} side in units box
+###################################################################################################
+
+
+
+###################################################################################################
+# Setting up simulation box and reading atom positions
+
+atom_style angle          # atoms with bonds, and angles
+
+# reading simulation box details from previosly written data file:
+read_data initial_configuration.txt group all
+# assigning mass to the atoms:
+mass * 1
+###################################################################################################
+
+
+###################################################################################################
+# Set up interactions - start with just harmonic bonds
+
+## Between bonded atoms
+bond_style   fene
+# For style fene, specify:
+#   * bond type
+#   * K (energy/distance^2);
+#   * R0 (maximum distance)
+#   * epsilon (energy)
+#   * sigma (distance)
+variable max_distance equal 1.5*${sigma}
+bond_coeff   *   30.0   ${max_distance} 1 ${sigma}
+
+
+## Between non-bonded atoms
+pair_style      lj/cut ${cutoff}
+# pair_modify shift yes        # option to ensure energy is calculated correctly; for WCA potential
+#  pair_coeff for LJ, specify 4:
+#    * atom type interacting with
+#    * atom type
+#    * energy; epsilon
+#    * mean diameter of the two atom types; sigma
+#    * cutoff
+pair_coeff      * * 1.0 ${sigma} ${cutoff}
+pair_modify shift yes # useful to shift the LJ potential so that there is no attraction
+
+# special bonds: 1-2, 1-3, 1-4 interactions
+special_bonds   fene
+###################################################################################################
+
+
+###################################################################################################
+# Type groups:
+group 1 id 1:${numberOfMonomers}
+group 2 id ${firstMonomerSecondRing}:${totalMonomers}
+
+# New groups:
+group cell region cylinder
+group box region cuboid
+group outside subtract box cell # all - cell
+###################################################################################################
+
+###################################################################################################
+#updating fixes and integrator:
+
+timestep 0.01 
+
+# variable seed equal 2500 # seed for the langevin white noise
+fix integrator all nve
+fix langevin1 all langevin   1.0 1.0 1.0 ${seed}  # langevin thermostat
+
+# setting up fixed reflecting walls:
+# fix walls all wall/reflect xlo EDGE xhi EDGE ylo EDGE yhi EDGE zlo EDGE zhi EDGE
+variable wall_sigma equal ${wall}
+variable wall_cut equal ${wall_sigma}*2^(1/6)
+fix cyl_walls all wall/region cylinder lj126 1 ${wall_sigma} ${wall_cut}
+###################################################################################################
+
+
+###################################################################################################
+# New dump:
+if "${numberOfMonomers} == 500" then &
+    "variable interval equal 50000" &
+else &
+    "variable interval equal 10000"
+dump dump1 all custom ${interval} visual.dump id type x y z # for visualization
+# dump position1 1 custom 100 positions1.dump id type x y z # positions printed for the monomer density/distribution
+# dump position2 2 custom 100 positions2.dump id type x y z
+# dump_modify position1 append yes
+# dump_modify position2 append yes
+###################################################################################################
+
+
+###################################################################################################
+# Compute section
+if "${numberOfMonomers} == 500" then &
+    "variable n equal 10000" &
+else &
+    "variable n equal 1000" # step interval to print CoM
+#centre of mass dump for type 1 atoms:
+compute CoM1 1 com
+variable t equal step
+variable c1_x equal c_CoM1[1]
+variable c1_y equal c_CoM1[2]
+variable c1_z equal c_CoM1[3]
+fix CoM_File1 1 print $n "${t} ${c1_x} ${c1_y} ${c1_z}" file com1.dat screen no
+
+#centre of mass dump for type 2 atoms:
+compute CoM2 2 com
+variable c2_x equal c_CoM2[1]
+variable c2_y equal c_CoM2[2]
+variable c2_z equal c_CoM2[3]
+fix CoM_File2 2 print $n "${t} ${c2_x} ${c2_y} ${c2_z}" file com2.dat screen no
+###################################################################################################
+
+
+###################################################################################################
+# Output thermodynamic info  (temperature, energy, pressure, etc.)
+thermo $n
+variable min_energy equal 20.20257 # minimum bond energy in kbT units for K = 30 and R_0 = 1.5 sigma; sigma = 1
+variable my_ebond equal ebond-${min_energy} # shifting emol
+variable my_etot equal etotal-${min_energy}
+variable my_pe equal pe-${min_energy}
+thermo_style       custom   step  temp epair  v_my_ebond v_my_pe ke v_my_etot  press  vol
+# thermo_style   custom   step  temp  epair  emol etotal  press  vol
+###################################################################################################
+
+###################################################################################################
+# Output thermodynamic info to file 
+variable time equal step
+variable mytemp equal temp
+variable my_epair equal epair
+variable my_ke equal ke
+variable my_press equal press
+variable my_vol equal vol
+
+# fix mythermofile all print $n "${time} ${mytemp} ${my_epair} ${my_ebond} ${my_pe} ${my_ke} ${my_etot} ${my_press} ${my_vol}" file thermo_output.dat screen no
+###################################################################################################
+
+###################################################################################################
+# now do a longer run: for relaxing the system: 10 times the reaxation time
+if "${numberOfMonomers} == 500" then &
+    "variable N equal 2.5*10^8" &
+else &
+    "variable N equal 4*10^7"
+run $N
+write_data final_configuration.txt nocoeff
+###################################################################################################

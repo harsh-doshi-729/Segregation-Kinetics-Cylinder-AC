@@ -1,0 +1,85 @@
+# This is a matplotlib style sheet that stores the values of rcParams that can be read to style plots
+
+# Text styles:
+axes.titlesize: 26
+axes.titleweight: bold
+axes.labelsize: 24 # 16
+axes.labelweight: bold
+font.weight: bold
+axes.formatter.use_mathtext: True
+axes.formatter.limits: -2, 3
+# Tex Styles:
+# text.usetex: True # Converts all tick labels to TeX
+# text.latex.preamble: r'\usepackage{bm}' # Doesn't work?
+# Font:
+font.family: Helvetica
+# font.serif: Times
+# font.sans-serif: 
+font.size: 22 # For the floating text and all other text not specified in other properties
+# Plotting lines:
+axes.linewidth: 1
+
+# Plotting colors / styles
+# axes.prop_cycle : cycler(color=[ "blue", "BB2D2D", "darkgreen", 'A701A7', 'black'])
+# These colors are vivid and distinct on white backgrounds.
+axes.prop_cycle : cycler(color=["blue", "#BB2D2D", "darkgreen", "#A701A7", "black",  "#C10020", "#803E75", "#FF6800", "#FFB300", "#A6BDD7"])
+# axes.prop_cycle : cycler(color=[ "black", "skyblue", "cyan", "blue", 'darkblue'])
+# axes.prop_cycle : cycler(color=[ "black", "0077FF", "0050FF", "blue", 'darkblue'])
+# axes.prop_cycle : cycler(color=['blue', "red"])
+# Distinct color cycle for up to 10 trajectories (colorblind-friendly and vivid on white):
+# axes.prop_cycle : cycler(color=["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"])
+
+# Grid:
+axes.grid: False
+grid.alpha: 0.7
+grid.linewidth: 1.6 # 0.6
+grid.linestyle: --
+
+# Legend:
+legend.fontsize: 22 # 15
+legend.markerscale: 2
+
+# General line and marker properties:
+lines.linewidth: 2
+# lines.marker:
+lines.markersize: 15
+# lines.markerfacecolor:
+
+# Ticks:
+xtick.major.size: 15
+xtick.minor.size: 10
+xtick.major.width: 2
+xtick.minor.width: 2
+ytick.major.size: 15
+ytick.minor.size: 10
+ytick.major.width: 2
+ytick.minor.width: 2
+
+xtick.labelsize: 22 # 14
+ytick.labelsize: 22 # 14
+
+
+# Figure:
+figure.figsize: 10, 6
+figure.titleweight: bold
+figure.titlesize: 26
+figure.labelweight: bold
+figure.labelsize: 22 # 18
+# Tight layout:
+figure.autolayout: True # True for box plots; False for monomer density
+
+# Box plot:
+boxplot.vertical: True
+boxplot.whiskers: 1.5
+boxplot.showmeans: True
+boxplot.medianprops.color: blue
+boxplot.meanprops.marker: D # diamond
+boxplot.meanprops.markerfacecolor: blue
+boxplot.meanprops.markeredgecolor: black
+# Size properties:
+boxplot.boxprops.linewidth: 2
+boxplot.whiskerprops.linewidth: 2
+boxplot.capprops.linewidth: 2
+boxplot.medianprops.linewidth: 2
+boxplot.flierprops.markeredgewidth: 2
+boxplot.flierprops.markersize: 10
