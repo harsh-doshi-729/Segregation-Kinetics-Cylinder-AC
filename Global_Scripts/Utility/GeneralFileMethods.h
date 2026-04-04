@@ -49,16 +49,16 @@
 
     //Sets the directory path by taking into account the number of Monomers and the special simulation variable set in the sysPaths file.
     // For example Adds "b500/" at the end of the passed path or goes to a simulation folder under b500/Previous_Attempts/
-    void SetDirectoryPath(char** directoryPathPointer, char* pathPrefix, int numberOfMonomers)
+    void SetDirectoryPath(char** directoryPathPointer, char* pathPrefix, int numberOfMonomers, char* specialSimulation)
     {
         int bytes;
-        if(strlen(SPECIAL_SIMULATION) == 0) // SPECIAL_SIMULATION not set; default location
+        if(strlen(specialSimulation) == 0) // SPECIAL_SIMULATION not set; default location
         {
             bytes = asprintf(directoryPathPointer, "%sb%i/", pathPrefix, numberOfMonomers);
         }
         else // SPECIAL_SIMULATION set
         {
-            bytes = asprintf(directoryPathPointer, "%sb%i/%s/", pathPrefix, numberOfMonomers, SPECIAL_SIMULATION);
+            bytes = asprintf(directoryPathPointer, "%sb%i/%s/", pathPrefix, numberOfMonomers, specialSimulation);
         }
         if(bytes == -1)
         {

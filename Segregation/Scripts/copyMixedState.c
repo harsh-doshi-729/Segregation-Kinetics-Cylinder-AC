@@ -28,6 +28,7 @@ int runNumber;
 char* atomStyle[20]; // The LAMMPS atom style being used in the simulation. For example: "bond", "angle", etc
 bool writeIndividualPolymerStates = false; // A flag that indicates whether both polymers should be written to separate files as individual polymers in the system
 // If they are written to individual files, then they are meant to be simulated separately 
+char* initializationProcedure; // The name of the procedure used to generate the mixed state; for example: "fene_recenter", "fene_glued", etc. This is used to set the path for the mixed state file to be read from
 bool deleteBackbone = false; // A flag to indicate whether the backbones in both polymers should be deleted so that only the side loops remain in the system
 // This is useful if one wants to check for internal concatenations, or concatenations between different side loops of the same polymer.
 // The deletion is done based on the cross links read from the database file. Note that this only works for architectures with side loops.
@@ -68,11 +69,11 @@ int regions[1][2] = {{1, 200}};
 // Sets the values of the global constant variables based on the arguments passed
 void SetConstants(int argc, char** argv)
 {
-    int numberOfMandatoryArguments = 4;
+    int numberOfMandatoryArguments = 5;
     if(argc < numberOfMandatoryArguments + 1) // number of arguments passed is less than expected
     {
-        printf("Not enough arguments passed! Please pass the number of monomers(int), the architecture(string), the flag indicating if the polymer backbone should be deleted (0 or 1), and the filepath to the directory where the state is to be copied (string) as arguments from the command line\n");
-        printf("For example:\n./createInitialStateExecuatable.out 200 Arc2 0 /scratch/Harsh/New_Segregation/\n");
+        printf("Not enough arguments passed! Please pass the number of monomers(int), the architecture(string), the flag indicating if the polymer backbone should be deleted (0 or 1), the name of the initialization procedure, and the filepath to the directory where the state is to be copied (string) as arguments from the command line\n");
+        printf("For example:\n./createInitialStateExecuatable.out 200 Arc2 0 fene_recenter /scratch/Harsh/New_Segregation/\n");
         printf("Optional arguments for another architecture (to which the state should be converted to) and the particular run number can also be passed after the mandatory arguments if desired\n");
         exit(1);
     }
@@ -99,14 +100,15 @@ void SetConstants(int argc, char** argv)
             deleteBackbone = true;
         }
         totalMonomers = numberOfMonomers * numberOfPolymers;
-        destination_directory = argv[4];
+        initializationProcedure = argv[4];
+        destination_directory = argv[5];
     }
 
     char* createDirectory;
     SetAbsolutePath(&createDirectory, CREATE_INITIAL_STATES);
-    SetDirectoryPath(&mixed_file_directory, createDirectory, numberOfMonomers);
+    SetDirectoryPath(&mixed_file_directory, createDirectory, numberOfMonomers, initializationProcedure);
     free(createDirectory);
-    SetDirectoryPath(&destination_directory, destination_directory, numberOfMonomers);
+    SetDirectoryPath(&destination_directory, destination_directory, numberOfMonomers, initializationProcedure);
     
     // getting optional arguments:
     // default value for optional destination architecture:
@@ -149,9 +151,9 @@ void SetReadFilePath(char** filePathPointer, int runNumber)
     Append(filePathPointer, mixed_file_directory, architecture, fileName);
 }
 
-void SetWriteFileName(char** fileNamePointer, char* const prefix)
+void SetWriteFileName(char** fileNamePointer)
 {
-    int bytes = asprintf(fileNamePointer, "%s%i.txt", prefix, currentIndexOfPolymer);
+    int bytes = asprintf(fileNamePointer, "initial_configuration%i.txt", currentIndexOfPolymer);
     if(bytes == -1)
     {
         printf("Memory could not be allocated for the separated initial configuration file name!\n");
@@ -165,7 +167,7 @@ void SetWriteFilePath(char** filePathPointer, int runNumber)
     char* folderName;
     char* fileName;
     if(writeIndividualPolymerStates)
-        SetWriteFileName(&fileName, "initial_configuration");
+        SetWriteFileName(&fileName);
     else
         fileName = "initial_configuration.txt";
 
@@ -903,12 +905,12 @@ void GenerateInitialState(int runNumber)
     }
 
     ReadAndWriteMixedState(readFilePath, writeFilePath, false);
+    printf("Mixed configuration file copied for %s run %i to %s!\n", architecture, runNumber, writeFilePath);
     if(!USE_CONFIG_PATHS)
     {
         free(readFilePath);
         free(writeFilePath);
     }
-    printf("Mixed configuration file copied for %s run %i!\n", architecture, runNumber);   
 }
 
 //Reads the mixed state and generates two files for each of the polymers
@@ -924,9 +926,12 @@ void GenerateSeprateInitialStates(int runNumber)
     SetWriteFilePath(&writeFilePath2, runNumber);
     ReadAndWriteMixedStatesSeparately(readFilePath, writeFilePath1, writeFilePath2, false);
     free(readFilePath);
+    char* writeFileName;
+    SetWriteFileName(&writeFileName);
+    printf("Mixed configuration file copied for %s run %i to separate files %s and %s!\n", architecture, runNumber, writeFilePath1, writeFileName); 
     free(writeFilePath1);
     free(writeFilePath2);
-    printf("Mixed configuration file copied for %s run %i to separate files!\n", architecture, runNumber); 
+    free(writeFileName);
 }
 
 int main(int argc, char** argv)
