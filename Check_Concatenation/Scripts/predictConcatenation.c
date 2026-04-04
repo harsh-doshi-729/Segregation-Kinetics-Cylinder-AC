@@ -12,7 +12,7 @@
 #include <assert.h>
 
 // importing paths file:
-#include "../../../../../Scripts/System_File_Paths/system_file_paths.h"
+#include "../../Global_Scripts/System_File_Paths/system_file_paths.h"
 #include GENERAL_FILE_METHODS
 #include LAMMPS_POSITION_FILE
 #include REGION
@@ -80,8 +80,12 @@ void SetConstants(int argc, char** argv)
             exit(1);
         }
 
+        // Setting absolute path for directory:
+        char* checkConcatenationPath;
+        SetAbsolutePath(&checkConcatenationPath, CHECK_CONCATENATION);
         // Setting directory:
-        SetDirectoryPath(&directory, CHECK_CONCATENATION, numberOfMonomers);
+        SetDirectoryPath(&directory, checkConcatenationPath, numberOfMonomers);
+        free(checkConcatenationPath);
 
         // Optional argument
         if(argc > numberOfMandatoryArguments + 1)
