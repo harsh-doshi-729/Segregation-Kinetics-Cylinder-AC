@@ -26,7 +26,7 @@ int numberOfPolymers = 2;
 int totalMonomers;
 int runNumber;
 char* atomStyle[20]; // The LAMMPS atom style being used in the simulation. For example: "bond", "angle", etc
-bool writeIndividualPolymerStates = WRITE_INDIVIDUAL_POLYMER_STATES; // A flag that indicates whether both polymers should be written to separate files as individual polymers in the system
+bool writeIndividualPolymerStates = false; // A flag that indicates whether both polymers should be written to separate files as individual polymers in the system
 // If they are written to individual files, then they are meant to be simulated separately 
 bool deleteBackbone = false; // A flag to indicate whether the backbones in both polymers should be deleted so that only the side loops remain in the system
 // This is useful if one wants to check for internal concatenations, or concatenations between different side loops of the same polymer.
@@ -102,7 +102,10 @@ void SetConstants(int argc, char** argv)
         destination_directory = argv[4];
     }
 
-    SetDirectoryPath(&mixed_file_directory, CREATE_INITIAL_STATES, numberOfMonomers);
+    char* createDirectory;
+    SetAbsolutePath(&createDirectory, CREATE_INITIAL_STATES);
+    SetDirectoryPath(&mixed_file_directory, createDirectory, numberOfMonomers);
+    free(createDirectory);
     SetDirectoryPath(&destination_directory, destination_directory, numberOfMonomers);
     
     // getting optional arguments:

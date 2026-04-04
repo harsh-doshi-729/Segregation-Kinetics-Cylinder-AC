@@ -5,14 +5,14 @@
     #define SYSTEM_FILE_PATHS_H // include guard
 
     // IMPORTANT NOTE: Please set the value of the macro below to the path of the directory where the project is located on your system. This will make it so that all the file paths defined in this header file are correct for your system. For example, if the project is located in "/home/harsh/Segregation-Kinetics-Cylinder-AC/", then set BASE_DIR to "/home/harsh/Segregation-Kinetics-Cylinder-AC/".
+    // NOTE: Please ensure to add the option -I <path/to/project/directory> while compiling any of the C scripts that import this header file
     #define BASE_DIR "/home/harsh/Segregation-Kinetics-Cylinder-AC/" // The base directory where the project is located; all other file paths are defined based
     
 
     // Utility files:
     // #define RANDOM "/home/harsh/ComputationalPhysics/Week_1_Assignment/random.h"
-    // NOTE: Please ensure to add the option -I <path/to/project/directory> while compiling any of the C scripts that import this header file
     // This makes it so that the compiler looks for the header files in the project directory as well, and thus, can find the header file paths defined in this file
-    #define GENERAL_FILE_METHODS "/Global_Scripts/Utility/GeneralFileMethods.h"
+    #define GENERAL_FILE_METHODS "Global_Scripts/Utility/GeneralFileMethods.h"
     #define LAMMPS_POSITION_FILE "Global_Scripts/Utility/LAMMPS_Position_File.h"
     #define MONOMER_DISTRIBUTION "Global_Scripts/Utility/MonomerDistribution.h"
     #define CROSS_LINKS_DATABASE "Global_Scripts/Utility/Cross-Links_Database.h"
@@ -44,5 +44,16 @@
 
     // Segregation criterion:
     #define SEGREGATION_CRITERION "f045_s040_t00"
+
+    // Function to get the absolute directory path for a path passed relative to the project directory
+    void SetAbsolutePath(char** absolutePathPointer, char* relativePath)
+    {
+        int bytes = asprintf(absolutePathPointer, "%s%s", BASE_DIR, relativePath);
+        if(bytes == -1)
+        {
+            printf("Memory could not be allocated for the absolute path!\n");
+            exit(1);
+        }
+    }
 
 #endif
