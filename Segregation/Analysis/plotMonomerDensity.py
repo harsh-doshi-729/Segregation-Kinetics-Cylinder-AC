@@ -7,12 +7,13 @@ import sys
 import math
 from numpy.typing import ArrayLike
 # importing the scripts that contains all the local paths
-# The path to the directory containing this module is set as the environment variable PYTHONPATH
+sys.path.append(f"../../Global_Scripts/System_File_Paths/")
 import system_file_paths as sysPaths 
 import Segregation_Parameters as segParam
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/")
 import PlottingTools as pt
 # importing the regions config file:
-sys.path.append(f"{sysPaths.POLYMER_PHYSICS}Scripts/Config_Files/")
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Config_Files/")
 import regions_config as reg
 
 # polymer information:
@@ -62,7 +63,7 @@ def SetConstants():
 
 def GetFolder(special_simulation: str = sysPaths.SPECIAL_SIMULATION) -> str:
     """Returns the folder where the segregation data is stored"""
-    prefix = sysPaths.GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, special_simulation)
+    prefix = sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, special_simulation)
     return f"{prefix}{architecture}/"
 
 def ShiftBinEdges(binLeftEdges):
@@ -338,7 +339,7 @@ def PlotAndSaveRadialDistribution(showPlot: bool = False) -> None:
     plt.close(fig) # closing the figure to save memory
     print(f"Plotted Radial Monomer Distribution for {architecture} Run {runIndex}")
 
-def PlotRadialInitializationComparison(special_simulations: list[str], numberOfMonomers: int, architecture: str, boxLength: float, runIndex: int = runIndex, baseFolder: str = sysPaths.NEW_SEGREGATION, showPlot: bool = False) -> None:
+def PlotRadialInitializationComparison(special_simulations: list[str], numberOfMonomers: int, architecture: str, boxLength: float, runIndex: int = runIndex, baseFolder: str = sysPaths.SEGREGATION, showPlot: bool = False) -> None:
     """
     Plots a comparison of the radial monomer distributions for different initialization conditions of the same architecture system.
     Args:
@@ -347,7 +348,7 @@ def PlotRadialInitializationComparison(special_simulations: list[str], numberOfM
         - architecture: The architecture of the polymer (string)
         - boxLength: The (finite) length of the cylindrical box
         - runIndex: The index of the run to be plotted. Default is the global variable runIndex.
-        - baseFolder: The base folder where the run data is stored. Default is sysPaths.NEW_SEGREGATION
+        - baseFolder: The base folder where the run data is stored. Default is sysPaths.SEGREGATION
         - showPlot: A boolean flag to indicate if the plot should be displayed interactively. Default is False.
     """
     fig, ax = plt.subplots()

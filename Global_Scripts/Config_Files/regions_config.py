@@ -1,10 +1,9 @@
 # This is a config file that will be useful for plotting the monomer densities  or CoM timesries for polymers with multiple regions
 
 import sys
-from system_file_paths import POLYMER_PHYSICS
 
 
-USE_REGIONS = True # A flag to indicate whether the polymers are subdivided into regionss
+USE_REGIONS = False # A flag to indicate whether the polymers are subdivided into regionss
 NUMBER_OF_POLYMER_REGIONS = 2 # The number of regions in a single polymer
 NUMBER_OF_REGIONS = 4 # The total number of distinct regions in the entire system
 if USE_REGIONS:

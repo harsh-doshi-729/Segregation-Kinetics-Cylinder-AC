@@ -1,9 +1,9 @@
 # This is a python script that will be used as a config file to import the values of the parameters 
 # used in scripts
 import pandas as pd
-
+import sys
+sys.path.append(f"../../Global_Scripts/System_File_Paths/") # Adding the path to the system file paths module to the system path
 import system_file_paths as sysPaths
-import cluster_file_paths as clusPaths
 
 NUMBER_OF_RUNS = 50
 # Aspect ratio of cylindrical confinement:
@@ -34,7 +34,7 @@ TAU_0 = 100 # approximate relaxation time in terms of iterations of Langevin Dyn
 LINEAR_ARCHITECTURES = ["Arc_Lin"]
 
 # Architectures of interest: to perform operations on a few select architectures
-AOI_LIST = ["Arc0", "ArcI-8", "Arc2", "Arc_Loop_5", "Arc1_10"]
+AOI_LIST = ["Arc-0", "Arc-1-1_1-1", "Arc-1-2", "Arc-1-5", "Arc-1-10"]
 # AOI_LIST = ["Arc0", "Arc_Loop_5"]
 # AOI_LIST = ["Arc0", "Arc1_1", "ArcR8_1_9", "Arc4", "ArcI-8"]
 # AOI_LIST = ["Arc0", "ArcR8_1_19", "ArcR8_1_9", "ArcR8_3_7", "ArcI-8"]
@@ -51,15 +51,15 @@ SORT_ARCHITECTURES = True # Flag to indicate whether the AOI_LIST should be sort
 # The values are the (hopefully) polished/sophisticated names or aliases that are to be reported
 # ALIASES = {"Arc1_1": "ArcR8-1-19", "ArcR8_1_19": "ArcR8-1-19", "ArcR8_1_9": "ArcR8-1-9", "Arc4": "ArcR8-3-7", "ArcR8_3_7": "ArcR8-3-7", "ArcI-8": "ArcR8-1-1"} # Old nomenclature
 # ALIASES = {"Arc1_1": "Arc-1-1", "ArcR8_1_19": "Arc-1-1", "ArcR8_1_9": "Arc-1-1", "Arc4": "Arc-1-1", "ArcR8_3_7": "Arc-1-1", "ArcI-8": "Arc-1-1"}
-ALIASES = {"Arc0": "Arc-0", "ArcI-8": "Arc-1-1", "Arc2": "Arc-1-2", "Arc_Loop_5": "Arc-1-5", "Arc1_10": "Arc-1-10"}
+ALIASES = {"Arc-0": "Arc-0", "Arc-1-1_1-1": "Arc-1-1", "Arc-1-2": "Arc-1-2", "Arc-1-5": "Arc-1-5", "Arc-1-10": "Arc-1-10"}
 # The internal loop size breakdown for all architectures:
-ARC_BREAKDOWN_200 = {"Arc0": "[200]", "Arc1_1": "[190-10]", "ArcR8_1_19": "[190-10]", "ArcR8_1_9": "[180-20]",
-                     "Arc4": "[140-60]", "ArcR8_3_7": "[140-60]", "ArcI-8": "[100-100]",
-                     "Arc2": "[100-50]", "Arc_Loop_5": "[100-20]", "Arc1_10": "[100-10]"}
+ARC_BREAKDOWN_200 = {"Arc-0": "[200]", "Arc-1-1_1-19": "[190-10]", "Arc-1-1_1-19": "[190-10]", "Arc-1-1_1-9": "[180-20]",
+                     "Arc4": "[140-60]", "Arc-1-1_3-7": "[140-60]", "Arc-1-1_1-1": "[100-100]",
+                     "Arc-1-2": "[100-50]", "Arc-1-5": "[100-20]", "Arc-1-10": "[100-10]"}
 
-ARC_BREAKDOWN_500 = {"Arc0": "[500]", "Arc1_1": "[475-25]", "ArcR8_1_19": "[475-25]", "ArcR8_1_9": "[450-50]",
-                     "Arc4": "[350-150]", "ArcR8_3_7": "[350-150]", "ArcI-8": "[250-250]",
-                     "Arc2": "[250-125]", "Arc_Loop_5": "[250-50]", "Arc1_10": "[250-25]"}
+ARC_BREAKDOWN_500 = {"Arc-0": "[500]", "Arc-1-1_1-19": "[475-25]", "Arc-1-1_1-19": "[475-25]", "Arc-1-1_1-9": "[450-50]",
+                     "Arc4": "[350-150]", "Arc-1-1_3-7": "[350-150]", "Arc-1-1_1-1": "[250-250]",
+                     "Arc-1-2": "[250-125]", "Arc-1-5": "[250-50]", "Arc-1-10": "[250-25]"}
 
 def GetAliasArchitecture(architecture: str) -> str:
     """Returns the corresponding alias architecture to the passed architecture if it exists in ALIASES"""
@@ -96,7 +96,7 @@ PLOT_INIT_COMPARISON = False # A flag to indicate whether to plot the comparison
 SPECIAL_SIMULATIONS = ["fene_recenter"]
 # AOI_COMPARE = ["Arc0", "ArcI-8", "Arc2", "Arc_Loop_5", "Arc1_10"] # An arc list for each special simulation
 PLOT_COMPARISON = True # A flag to indicate whether to plot the comparison for different architectures/runs
-AOI_COMPARE = ["Arc0", "ArcI-8", "Arc2", "Arc_Loop_5", "Arc1_10"] # ["Arc1_10", "Arc_Loop_5", "Arc2", "ArcI-8", "Arc0"]
+AOI_COMPARE = ["Arc-0", "Arc-1-1_1-1", "Arc-1-2", "Arc-1-5", "Arc-1-10"] # ["Arc1_10", "Arc_Loop_5", "Arc2", "ArcI-8", "Arc0"]
 # Custom folder paths for any comparison scripts: as a dictionary of <identifier>-<custom path> key-value pair
 COMPARE_CUSTOM_PATHS = {"Arc-1-5": "/home/harsh/ComputationalPhysics/Polymer_Physics/LAMMPS_runs/cluster-data/new_segregation/b200/Previous_Attempts/inf_recenter/Arc_Loop_5/run7/",
                         "Arc-1-10": "/home/harsh/ComputationalPhysics/Polymer_Physics/LAMMPS_runs/cluster-data/new_segregation/b200/Previous_Attempts/inf_recenter/Arc1_10/run1/"}
@@ -143,7 +143,7 @@ def UpdateGroupIndices(universe: set) -> None:
 USE_CUSTOM_LABELS = True
 CUSTOM_AXIS_LABEL = "Number of small loops"
 # CUSTOM_AXIS_LABEL = "Number of monomers in small loop"
-CUSTOM_LABELS = {"Arc0": 0, "ArcI-8": 1, "Arc1_1": 1, "ArcR8_1_19": 1, "Arc2": 2, "ArcML_2_20": 2, "Arc_Loop_5": 5, "ArcML_5_20": 5, "Arc1_10": 10}
+CUSTOM_LABELS = {"Arc-0": 0, "Arc-1-1_1-1": 1, "Arc-1-1_1-19": 1, "Arc-1-1_1-19": 1, "Arc-1-2": 2, "ArcML_2_20": 2, "Arc-1-5": 5, "ArcML_5_20": 5, "Arc-1-10": 10}
 # CUSTOM_LABELS = {"Arc0": 0, "Arc1_1": 10, "ArcR8_1_19": 10, "ArcR8_1_9": 20, "Arc4": 60, "ArcR8_3_7": 60, "ArcI-8": 100}
 # CUSTOM_LABELS = {"Arc0": 0, "Arc1_1": 25, "ArcR8_1_19": 25, "ArcR8_1_9": 50, "Arc4": 150, "ArcR8_3_7": 150, "ArcI-8": 250}
 
@@ -203,8 +203,8 @@ USE_COMMON_AXIS_LIMITS = False
 X_LIMS = [-20, 20] # [-20, 20] # [-0.55, 0.55]
 Y_LIMS = [-1, 0.45] # [-0.05, 3] # [ -2, 35] # [-1, 16]
 
-# Preferred order to c onvert to scientific notation:
-PREFERRED_ORDER = 3
+# Preferred order to convert to scientific notation:
+PREFERRED_ORDER = None # 3
 
 # Free Energy parameters: A dictionary such that the key is the file label and the value is the label that is to be displayed
 # FREE_ENERGY_LABELS = {"region_CoM_1_3": "Loop 1 and 3", "region_CoM_2_4": "Loop 2 and 4"}
@@ -252,10 +252,6 @@ def Get_SFTP_Commands(runIndex: int) -> str:
     lcd ../
     cd ../
     """
-
-# Special simulations and architectures to be backed up locally:
-BACKUP_SPECIAL_SIMULATIONS = ["fene_fbsr", "replication_like"]
-BACKUP_ARCHITECTURES = ["Arc0", "ArcI-8", "Arc2", "Arc_Loop_5", "Arc1_10"]
 
 # Parameters to include small label in figure:
 INCLUDE_PLOT_IDENTIFICATION_LABEL = False

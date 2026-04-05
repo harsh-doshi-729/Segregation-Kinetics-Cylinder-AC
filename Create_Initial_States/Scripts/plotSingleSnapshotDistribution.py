@@ -12,14 +12,17 @@ import sys
 from pathlib import Path
 
 # Importing additonal tools and config files
+sys.path.append(f"../../Global_Scripts/System_File_Paths/") # Adding the path to the system file paths module to the system path
 import system_file_paths as sysPaths
+sys.path.append(f"{sysPaths.SEGREGATION}Analysis/")
 import Segregation_Parameters as segParam
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/")
 import PlottingTools as pt
 # Importing the plotMonomerDensity from another folder:
 sys.path = sys.path[1:] # Excluding current directory
 import plotMonomerDensity # For the AddDistributions() method to compute average
 # Importing config file for regions:
-sys.path.append(f"{sysPaths.POLYMER_PHYSICS}Scripts/Config_Files/")
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Config_Files/")
 import regions_config as reg
 
 # Global variables:

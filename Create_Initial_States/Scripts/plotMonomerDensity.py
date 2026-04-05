@@ -10,15 +10,18 @@ from pathlib import Path
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator) # For setting major and minor ticks
 # importing the scripts that contains all the local paths
 # The path to the directory containing this module is set as the environment variable PYTHONPATH
+sys.path.append(f"../../Global_Scripts/System_File_Paths/") # Adding the path to the system file paths module to the system path
 import system_file_paths as sysPaths 
+sys.path.append(f"{sysPaths.SEGREGATION}Analysis/")
 import Segregation_Parameters as segParam
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/")
 import PlottingTools as pt
 # Importing the other single snapshot distribution script
 import plotSingleSnapshotDistribution as single
 # Importing the plotMonomerDensity from another folder:
 sys.path = sys.path[1:] # Excluding current directory
 import plotMonomerDensity
-sys.path.append(f"{sysPaths.POLYMER_PHYSICS}Scripts/Config_Files/")
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Config_Files/")
 import regions_config as reg
 
 # polymer information:
@@ -361,7 +364,7 @@ def PlotRegionDistributions(showPlot: bool = False) -> None:
 def PlotSingleSnapshotRegionDistributions(showPlot: bool = False) -> None:
     """Plots the regional monomer distributions that have been computed from only a single snapshot"""
     # Plotting subplots: one for each polymer
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_bold.mplstyle")
     fig, ax = plt.subplots(nrows = numberOfPolymers, sharex = True, sharey = True)
     folder = GetFolder(numberOfMonomers, architecture)
     numberOfPolymerRegions = reg.NUMBER_OF_REGIONS // numberOfPolymers # Number of regions in one polymer
@@ -572,9 +575,9 @@ if __name__ == "__main__":
     SetArguments()
     if runIndex == -1:
         for runIndex in range(1, numberOfRuns + 1):
-            mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_bold.mplstyle") # Setting the mpl style sheet
+            mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_bold.mplstyle") # Setting the mpl style sheet
             PlotDistributionForAllSections(numberOfSections = 8, showPlot = False)
-            mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/bold.mplstyle") # Setting the mpl style sheet
+            mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/bold.mplstyle") # Setting the mpl style sheet
             if reg.USE_REGIONS:
                 if not segParam.USE_SINGLE_SNAPSHOT:
                     PlotRegionDistributions(False)
@@ -593,10 +596,10 @@ if __name__ == "__main__":
         else:
             PlotAverageSingleSnapshotDistribution(True)
     else:
-        mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_big_bold.mplstyle") # Setting the mpl style sheet
+        mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_big_bold.mplstyle") # Setting the mpl style sheet
         # PlotDistribution(True)
         PlotDistributionForAllSections(numberOfSections = 8, showPlot = True)
-        mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle") # Setting the mpl style sheet
+        mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle") # Setting the mpl style sheet
         if reg.USE_REGIONS:
             if not segParam.USE_SINGLE_SNAPSHOT:
                 PlotRegionDistributions(True)
