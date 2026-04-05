@@ -6,7 +6,8 @@
 
     // IMPORTANT NOTE: Please set the value of the macro below to the path of the directory where the project is located on your system. This will make it so that all the file paths defined in this header file are correct for your system. For example, if the project is located in "/home/harsh/Segregation-Kinetics-Cylinder-AC/", then set BASE_DIR to "/home/harsh/Segregation-Kinetics-Cylinder-AC/".
     // NOTE: Please ensure to add the option -I <path/to/project/directory> while compiling any of the C scripts that import this header file
-    #define BASE_DIR "/home/harsh/Segregation-Kinetics-Cylinder-AC/" // The base directory where the project is located; all other file paths are defined based
+    // #define BASE_DIR "/home/harsh/Segregation-Kinetics-Cylinder-AC/" // The base directory where the project is located; all other file paths are defined based
+    #define PATH_MAX 500 // Maximum path length for the system; used for getting the executable path
     
 
     // Utility files:
@@ -45,15 +46,51 @@
     // Segregation criterion:
     #define SEGREGATION_CRITERION "f045_s040_t00"
 
-    // Function to get the absolute directory path for a path passed relative to the project directory
+    // Function to read the base directory environment variable and set it in the passed string pointer
+    void SetBaseDirectory(const char** baseDirectoryPointer)
+    {
+        *baseDirectoryPointer = getenv("SEG_BASE_DIR");
+        if (!*baseDirectoryPointer) // If the environment variable is not set
+        {
+            fprintf(stderr, "SEG_BASE_DIR not set! Please set the environment variable SEG_BASE_DIR to the absolute path of the project root directory.\n");
+            fprintf(stderr, "For eg.: $ export SEG_BASE_DIR=/path/to/Segregation-Kinetics-Cylinder-AC/\n");
+            exit(1);
+        }
+    }
+
+    #include <libgen.h>
+    #include <string.h>
+    #include <stdlib.h>
+    #include <stdio.h>
+    // Function to set the absolute directory path for a path passed relative to the project directory
     void SetAbsolutePath(char** absolutePathPointer, char* relativePath)
     {
-        int bytes = asprintf(absolutePathPointer, "%s%s", BASE_DIR, relativePath);
+        const char* base_dir;
+        SetBaseDirectory(&base_dir);
+        char* absPath; // Unclean absolute path that might contain symbolic links and relative path components
+        int bytes = asprintf(&absPath, "%s/%s", base_dir, relativePath);
         if(bytes == -1)
         {
             printf("Memory could not be allocated for the absolute path!\n");
             exit(1);
         }
+        char resolvedPath[PATH_MAX]; // Buffer to store the resolved absolute path
+        realpath(absPath, resolvedPath);
+        // Adding a trailing slash if it doesn't exist:
+        if(resolvedPath[strlen(resolvedPath) - 1] != '/')
+        {
+            int bytes = asprintf(absolutePathPointer, "%s/", resolvedPath);
+            if(bytes == -1)
+            {
+                printf("Memory could not be allocated for the absolute path with trailing slash!\n");
+                exit(1);
+            }
+        }
+        else
+        {
+            int bytes = asprintf(absolutePathPointer, "%s", resolvedPath);
+        }
+        free(absPath);
     }
 
 #endif
