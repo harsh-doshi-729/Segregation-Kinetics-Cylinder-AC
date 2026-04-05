@@ -9,8 +9,8 @@
 #include <assert.h>
 
 // importing paths file:
-#include "../../../../Scripts/System_File_Paths/system_file_paths.h"
-#include  GENERAL_FILE_METHODS
+#include "../../Global_Scripts/System_File_Paths/system_file_paths.h"
+#include GENERAL_FILE_METHODS
 #include LAMMPS_POSITION_FILE
 #include MONOMER_DISTRIBUTION
 #include REGION
@@ -34,6 +34,7 @@ bool isSystemUncut; // A flag to indicate whether the system is "uncut" i.e. a c
 // For systems that have nothing to do with LoopCutting at all, set this above flag to false.
 
 // Reading positions:
+char* initializationProcedure; // The name of the procedure used to generate the mixed state; for example: "fene_recenter", "fene_glued", etc.
 char* destinationLabel; // A string to store a label for the destination. Currently accepted labels: "new_segregation" and "Create_Initial_States"
 char* acceptedDestinations[2] = {"new_segregation", "Create_Initial_States"};
 char* directory; // The path to the directory where the simulation files are stored for the desired run
@@ -56,7 +57,7 @@ void SetConstants(int argc, char** argv)
     int numberOfMandatoryArguments = 5;
     if(argc < numberOfMandatoryArguments + 1) // +1 since the script name is passed as the first argument always
     {
-        printf("Not enough arguments passed! Please pass the number of monomers (integer), architecture(string), runNumber(integer), destination label (string), and the uncut flag (0 or 1) as arguments from the command line\n");
+        printf("Not enough arguments passed! Please pass the number of monomers (integer), architecture(string), runNumber(integer), destination label (string), and the name of the initialization procedure (string) as arguments from the command line\n");
         printf("Accepted destination labels: ");
         PrintArray(2, acceptedDestinations);
         printf("Optional arguments for a boolean argument (0 or 1) to indicate if a single snapshot should be used to compute the distribution and the length of the cylinder (double) can be passed after the above arguments.\n");
@@ -68,11 +69,9 @@ void SetConstants(int argc, char** argv)
         architecture = argv[2]; // the second argument after the program name
         runIndex = atoi(argv[3]); // the third argument after the program name
         destinationLabel = argv[4];
+        initializationProcedure = argv[5];
         isLengthInfinite = true; // Default value in case the axis length is not passed
-        if(strcmp(argv[5], "0") == 0)
-            isSystemUncut = false;
-        else
-            isSystemUncut = true;
+        isSystemUncut = false; // Default value for the system being uncut; can be changed by passing the appropriate argument from the command line
         // Verifying the arguments:
         if(numberOfMonomers == 0)
         {
@@ -106,7 +105,7 @@ void SetConstants(int argc, char** argv)
 
         char* folderPrefix;
         if(strcasecmp(destinationLabel, acceptedDestinations[0]) == 0) // new_segregation chosen
-            folderPrefix = NEW_SEGREGATION;
+            folderPrefix = SEGREGATION;
         else if(strcasecmp(destinationLabel, acceptedDestinations[1]) == 0) // Create_Initial_States chosen
             folderPrefix = CREATE_INITIAL_STATES;
         else
@@ -115,13 +114,15 @@ void SetConstants(int argc, char** argv)
             PrintArray(2, acceptedDestinations);
             exit(1);
         }
-
-        SetDirectoryPath(&directory, folderPrefix, numberOfMonomers);
+        char* prefixAbsDirectory; // absolute path to the folder prefix directory
+        SetAbsolutePath(&prefixAbsDirectory, folderPrefix);
+        SetDirectoryPath(&directory, prefixAbsDirectory, numberOfMonomers, initializationProcedure);
+        free(prefixAbsDirectory);
 
         // Optional arguments:
         if(argc > numberOfMandatoryArguments + 1)
         {
-            // Teh first optional argument is assumed to be the boolean flag
+            // The first optional argument is assumed to be the boolean flag
             if(atoi(argv[numberOfMandatoryArguments+1]) == 1) // If one was passed
             {
                 useSingleSnapshot = true;
@@ -231,6 +232,11 @@ void ComputeAndPrintDistribution(void)
         char* writeFilePath;
         SetWriteFilePath(&writeFilePath, n+1);
         FILE* writeFilePointer = fopen(writeFilePath, "w");
+        if(writeFilePointer == NULL)
+        {
+            printf("The file %s could not be opened for writing! Terminating.\n", writeFilePath);
+            exit(1);
+        }
         
         // calculating distribution:
         int arraySize = dist_array[n].numberOfBins;
