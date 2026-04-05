@@ -35,8 +35,8 @@ bool isSystemUncut; // A flag to indicate whether the system is "uncut" i.e. a c
 
 // Reading positions:
 char* initializationProcedure; // The name of the procedure used to generate the mixed state; for example: "fene_recenter", "fene_glued", etc.
-char* destinationLabel; // A string to store a label for the destination. Currently accepted labels: "new_segregation" and "Create_Initial_States"
-char* acceptedDestinations[2] = {"new_segregation", "Create_Initial_States"};
+char* destinationLabel; // A string to store a label for the destination. Currently accepted labels: "Segregation" and "Create_Initial_States"
+char* acceptedDestinations[2] = {"Segregation", "Create_Initial_States"};
 char* directory; // The path to the directory where the simulation files are stored for the desired run
 simulation_data read_data; // The struct to read the data
 
@@ -104,7 +104,7 @@ void SetConstants(int argc, char** argv)
         }
 
         char* folderPrefix;
-        if(strcasecmp(destinationLabel, acceptedDestinations[0]) == 0) // new_segregation chosen
+        if(strcasecmp(destinationLabel, acceptedDestinations[0]) == 0) // Segregation chosen
             folderPrefix = SEGREGATION;
         else if(strcasecmp(destinationLabel, acceptedDestinations[1]) == 0) // Create_Initial_States chosen
             folderPrefix = CREATE_INITIAL_STATES;
@@ -164,7 +164,7 @@ void SetReadFilePath(char** filePathPointer)
     char* folder;
     SetUncutFolderName(&folder, architecture, runIndex, isSystemUncut);
     char* fileName;
-    if(strcasecmp(destinationLabel, acceptedDestinations[0]) == 0) // new_segregation chosen
+    if(strcasecmp(destinationLabel, acceptedDestinations[0]) == 0) // Segregation chosen
         fileName = "visual.dump";
     else if(strcasecmp(destinationLabel, acceptedDestinations[1]) == 0) // Create_Initial_States chosen
         fileName = "distribution_positions.dump";
@@ -180,7 +180,7 @@ void SetWriteFilePath(char** filePathPointer, int regionID)
     char* folder;
     SetUncutFolderName(&folder, architecture, runIndex, isSystemUncut);
     char* fileNamePrefix;
-    if(strcasecmp(destinationLabel, acceptedDestinations[0]) == 0) // new_segregation chosen
+    if(strcasecmp(destinationLabel, acceptedDestinations[0]) == 0) // Segregation chosen
         fileNamePrefix = "monomer_distribution_reg";
     else if(strcasecmp(destinationLabel, acceptedDestinations[1]) == 0) // Create_Initial_States chosen
         fileNamePrefix = "monomer_distribution/monomer_distribution_reg";
