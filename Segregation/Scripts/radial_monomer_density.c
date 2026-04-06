@@ -8,7 +8,7 @@
 #include <time.h>
 #include <assert.h>
 
-#include "../../../../Scripts/System_File_Paths/system_file_paths.h"
+#include "../../Global_Scripts/System_File_Paths/system_file_paths.h"
 #include GENERAL_FILE_METHODS
 #include LAMMPS_POSITION_FILE
 #include MONOMER_DISTRIBUTION
@@ -34,21 +34,22 @@ monomer_distribution_data dist_data;
 
 // File I/O information:
 char* directory; // The path to the folder where the desired file is stored
+char* initializationProcedure; // The name of the initialization procedure used to generate the initial state; this is used to read from the correct folder
 simulation_data read_data;
 
 // Directory labels:
 int labelArrayLength = 2;
-char* acceptedDirectoryLabels[] = {"new_segregation", "Create_Initial_States"};
-bool forInitialization = false; // by default, the distribution is calculated in Create_Initial_States
+char* acceptedDirectoryLabels[] = {"Segregation", "Create_Initial_States"};
+bool forInitialization = false; // by default, the distribution is calculated in Segregation
 
 // Reads the arguments from the command line and sets the corresponding constants:
 void SetConstants(int argc, char** argv)
 {
-    int numberOfMandatoryArguments = 4;
+    int numberOfMandatoryArguments = 5;
     if(argc < numberOfMandatoryArguments + 1)
     {
-        printf("Not enough arguments passed! Please pass the number of monomers (integer), architecture(string), the runNumber(integer), and the binWidth (float) as arguments from the command line in the following format:\n");
-        printf("./radial.out <numberOfMonomers> <architecture> <runIndex> <binWidth>\n");
+        printf("Not enough arguments passed! Please pass the number of monomers (integer), architecture(string), the runNumber(integer), the binWidth (float), and the initialization procedure (string) as arguments from the command line in the following format:\n");
+        printf("./radial.out <numberOfMonomers> <architecture> <runIndex> <binWidth> <initializationProcedure>\n");
         printf("An optional argument for the directory label can be passed to calculate the distribution in that directory.\n");
         printf("Accepted directory labels: ");
         PrintArray(labelArrayLength, acceptedDirectoryLabels);
@@ -60,6 +61,7 @@ void SetConstants(int argc, char** argv)
         architecture = argv[2]; // the second argument after the program name
         runIndex = atoi(argv[3]); // the third argument after the program name
         binWidth = atof(argv[4]);
+        initializationProcedure = argv[5]; // the fifth argument after the program name
 
         // Verifying inputs:
         if(numberOfMonomers == 0)
@@ -89,7 +91,7 @@ void SetConstants(int argc, char** argv)
         // equilibrationSteps = 2 * pow(10, 6);
 
         // Checking for optional argument:
-        char* folderPrefix = NEW_SEGREGATION; // default directory 
+        char* folderPrefix = SEGREGATION; // default directory is the Segregation folder
         if(argc > numberOfMandatoryArguments + 1)
         {
             char* label = argv[numberOfMandatoryArguments+1];
@@ -100,21 +102,24 @@ void SetConstants(int argc, char** argv)
                 PrintArray(labelArrayLength, acceptedDirectoryLabels);
                 exit(1);
             }
-            else if(index == 1) // new_segregation passed
+            else if(index == 1) // Segregation passed
             {
                 folderPrefix = CREATE_INITIAL_STATES;
                 forInitialization = true;
             }
         }
         // Setting the directory:
-        SetDirectoryPath(&directory, folderPrefix, numberOfMonomers);
+        char* folderPrefixPath;
+        SetAbsolutePath(&folderPrefixPath, folderPrefix);
+        SetDirectoryPath(&directory, folderPrefixPath, numberOfMonomers, initializationProcedure);
+        free(folderPrefixPath);
     }
 }
 
 // Sets the read file path to the position dump file to be read from:
 void SetReadFilePath(char** filePathPointer)
 {
-    char* fileName = "visual.dump"; // default filename outside Create_Initial_States
+    char* fileName = "visual.dump"; // default filename in Segregation
     if(forInitialization)
         fileName = "distribution_positions.dump";
     char* folder;
