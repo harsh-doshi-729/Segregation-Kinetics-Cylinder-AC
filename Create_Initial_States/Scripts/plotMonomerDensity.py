@@ -34,6 +34,8 @@ runIndex = -1
 numberOfSteps = 4 * 10 ** 7
 TAU_0 = 200 # timestep = 0.05 and damp = 1
 
+initializationProcedure = ""
+
 numberOfMonomers = 200 # each 
 diameter = 0
 boxLength = 0
@@ -45,16 +47,18 @@ def SetArguments():
     global runIndex
     global diameter
     global boxLength
+    global initializationProcedure
     
-    numberOfMandatoryArguments = 2
+    numberOfMandatoryArguments = 3
     if len(sys.argv) < numberOfMandatoryArguments + 1:
-        print("Not enough arguments specified while invoking the script! Please pass the number of monomers, the name of the architecture in the following format:")
-        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture> ")
+        print("Not enough arguments specified while invoking the script! Please pass the number of monomers, the name of the architecture, and the name of the initialization procedure in the following format:")
+        print("python /<path>/plotMonomerDensity.py <noOfMonomers> <architecture> <initializationProcedure>")
         print("An optional argument for a run number can be passed to plot for just that run.")
         print("If 0 is passed as run index, the average monomer distribution over all runs will be plotted (only when segParam.USE_SINGLE_SNAPSHOT = True).")
         sys.exit(1) # terminating the script
     
     architecture = sys.argv[2]
+    initializationProcedure = sys.argv[3]
     numberOfMonomers = sys.argv[1]
 
     # checking if the number of monomers is valid:
@@ -83,7 +87,7 @@ def ShiftBinEdges(binLeftEdges, binWidth: float):
     binCentres = binEdges + 0.5 * binWidth
     return binCentres
 
-def GetFolder(numberOfMonomers: int, architecture: str, special_simulation: str = sysPaths.SPECIAL_SIMULATION) -> str:
+def GetFolder(numberOfMonomers: int, architecture: str, special_simulation: str) -> str:
     """Returns the path to the folder where the distribution files are stored"""
     folderPrefix = sysPaths.GetFolder(sysPaths.CREATE_INITIAL_STATES, numberOfMonomers, special_simulation)
     folder = f"{folderPrefix}{architecture}/"
@@ -121,7 +125,7 @@ def PlotSingleDistribution(ax, binCentres: ArrayLike, distribution: ArrayLike, t
 def PlotDistribution(showPlot: bool = False) -> None:
     """Plots the monomer distribution for an entire system"""
     fig, ax = plt.subplots(figsize = (10, 6))
-    folder = GetFolder(numberOfMonomers, architecture)
+    folder = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     filePath = GetDistributionFilePath(folder, runIndex, f"radial_monomer_distribution.csv")
     binCentres, distribution = GetDistributionData(filePath)
     PlotSingleDistribution(ax, binCentres, distribution, "")
@@ -144,7 +148,7 @@ def PlotDistributionForAllSections(numberOfSections: int, showPlot: bool = False
     ncols = numberOfSections // nrows
     fig, axes = plt.subplots(nrows = nrows, ncols = ncols, sharey = True, sharex = True)
     sectionID = 1
-    folder = GetFolder(numberOfMonomers, architecture)
+    folder = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     # debugging:
     # totalProbability = 0 # verifying that that the area under the prob distribution curves amounts to 1
     # binWidth = 0.4
@@ -228,7 +232,7 @@ def PlotDistributionForAllSections(numberOfSections: int, showPlot: bool = False
 def PlotPolymerDistributions(showPlot: bool = False) -> None:
     """Plots the monomer distributions of each entire polymer in the whole cylinder."""
     fig, ax = plt.subplots(figsize = (12, 6))
-    folder = GetFolder(numberOfMonomers, architecture)
+    folder = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     # Reading the regions monomer density: Adding them up to get the density for the entire polymer
 
     # Setting number of regions
@@ -298,8 +302,8 @@ def PlotPolymerDistributions(showPlot: bool = False) -> None:
     leg = ax.legend(loc = 'lower center')
 
     # Setting major and minor ticks:
-    ax.xaxis.set_major_locator(MultipleLocator(0.2))
-    ax.xaxis.set_minor_locator(MultipleLocator(0.05))
+    # ax.xaxis.set_major_locator(MultipleLocator(0.2))
+    # ax.xaxis.set_minor_locator(MultipleLocator(0.05))
 
     # Setting axis limits if necessary:
     if segParam.USE_COMMON_AXIS_LIMITS:
@@ -333,7 +337,7 @@ def PlotPolymerDistributions(showPlot: bool = False) -> None:
 def PlotRegionDistributions(showPlot: bool = False) -> None:
     """Plots the monomer distribution separately for each region in the entire cylinder"""
     fig, ax = plt.subplots()
-    folder = GetFolder(numberOfMonomers, architecture)
+    folder = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     for regionIndex in range(reg.NUMBER_OF_REGIONS):
         filePath = GetDistributionFilePath(folder, runIndex, f"monomer_distribution_reg{regionIndex+1}.csv")
         binWidth = plotMonomerDensity.PlotDistribution(numberOfMonomers, architecture, filePath, reg.REGION_LABELS[regionIndex], ax, boxLength, runIndex = runIndex, numberOfSteps = numberOfSteps/TAU_0)
@@ -366,7 +370,7 @@ def PlotSingleSnapshotRegionDistributions(showPlot: bool = False) -> None:
     # Plotting subplots: one for each polymer
     mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_bold.mplstyle")
     fig, ax = plt.subplots(nrows = numberOfPolymers, sharex = True, sharey = True)
-    folder = GetFolder(numberOfMonomers, architecture)
+    folder = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     numberOfPolymerRegions = reg.NUMBER_OF_REGIONS // numberOfPolymers # Number of regions in one polymer
     for regionIndex in range(reg.NUMBER_OF_REGIONS):
         filePath = GetDistributionFilePath(folder, runIndex, f"monomer_distribution_reg{regionIndex+1}_single.csv")
@@ -405,7 +409,7 @@ def PlotSingleSnapshotRegionDistributions(showPlot: bool = False) -> None:
 def PlotAverageSingleSnapshotDistribution(showPlot: bool = False) -> None:
     """Plots the average probability distributions separately for each region
     The average is over a single snapshot for each of the runs"""
-    folderPath = GetFolder(numberOfMonomers, architecture)
+    folderPath = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     totalProbList = []
     binsList= []
     binWidth = 0
@@ -446,7 +450,7 @@ def PlotAverageSingleSnapshotDistribution(showPlot: bool = False) -> None:
 def PlotTotalDistribution(showPlot: bool = False) -> None:
     """Plots the monomer distribution of all polymers in the entire cylinder"""
     fig, ax = plt.subplots()
-    folder = GetFolder(numberOfMonomers, architecture)
+    folder = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     distributions = []
     for regionIndex in range(1, reg.NUMBER_OF_REGIONS + 1):
         filePath = GetDistributionFilePath(folder, runIndex, f"monomer_distribution_reg{regionIndex}.csv")
@@ -509,7 +513,7 @@ def PlotTotalDistribution(showPlot: bool = False) -> None:
 
 def PlotRadialDistribution(showPlot: bool = False) -> None:
     """Plots the radial distribution of the entire system in the cylinder and saves it as a figure"""
-    folder = GetFolder(numberOfMonomers, architecture)
+    folder = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     filePath = GetDistributionFilePath(folder, runIndex, "radial_monomer_distribution.csv")
     radius = boxLength / segParam.ASPECT_RATIO / 2
     # Plotting:
@@ -554,7 +558,7 @@ def PlotRadialDistribution(showPlot: bool = False) -> None:
 def PlotAndSaveRegionwiseRadialDistribution(showPlot: bool = False) -> None:
     """Plots the radial monomer distributions of all the regions in the system and saves the figure as an image."""
     fig, ax = plt.subplots()
-    folder = GetFolder(numberOfMonomers, architecture)
+    folder = GetFolder(numberOfMonomers, architecture, special_simulation=initializationProcedure)
     for regionIndex in range(1, reg.NUMBER_OF_REGIONS + 1):
         # getting data from CSV file:
         filePath = f"{folder}run{runIndex}/monomer_distribution/radial_monomer_distribution_reg{regionIndex}.csv"
@@ -598,17 +602,17 @@ if __name__ == "__main__":
     else:
         mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_big_bold.mplstyle") # Setting the mpl style sheet
         # PlotDistribution(True)
-        PlotDistributionForAllSections(numberOfSections = 8, showPlot = True)
+        # PlotDistributionForAllSections(numberOfSections = 8, showPlot = True)
         mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle") # Setting the mpl style sheet
-        if reg.USE_REGIONS:
-            if not segParam.USE_SINGLE_SNAPSHOT:
-                PlotRegionDistributions(True)
-            else:
-                PlotSingleSnapshotRegionDistributions(True)
-        if segParam.PLOT_INIT_COMPARISON:
-            plotMonomerDensity.PlotRadialInitializationComparison(segParam.SPECIAL_SIMULATIONS, numberOfMonomers, architecture, boxLength, runIndex, sysPaths.CREATE_INITIAL_STATES, True)
-        else:
-            PlotRadialDistribution(True)
+        # if reg.USE_REGIONS:
+        #     if not segParam.USE_SINGLE_SNAPSHOT:
+        #         PlotRegionDistributions(True)
+        #     else:
+        #         PlotSingleSnapshotRegionDistributions(True)
+        # if segParam.PLOT_INIT_COMPARISON:
+        #     plotMonomerDensity.PlotRadialInitializationComparison(segParam.SPECIAL_SIMULATIONS, numberOfMonomers, architecture, boxLength, runIndex, sysPaths.CREATE_INITIAL_STATES, True)
+        # else:
+        #     PlotRadialDistribution(True)
         # PlotAndSaveRegionwiseRadialDistribution(True)
         PlotPolymerDistributions(True)
         # PlotTotalDistribution(True)
