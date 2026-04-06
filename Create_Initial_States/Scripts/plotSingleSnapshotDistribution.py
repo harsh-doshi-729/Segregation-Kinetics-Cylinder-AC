@@ -7,7 +7,7 @@ import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
-from pizza import data3 # Library class to read LAMMPS state file
+from pizza import data3 # Library class to read LAMMPS state file; must be installed separately
 import sys
 from pathlib import Path
 
@@ -31,6 +31,7 @@ numberOfPolymers = 2
 architecture = "Arc1_10"
 runIndex = -1
 numberOfRuns = 50
+initializationProcedure = ""
 
 atomsSectionHeader = "Atoms"
 atomStyle = "angle"
@@ -50,11 +51,12 @@ def SetConstants():
     global atomsSectionHeader
     global diameter
     global boxLength
+    global initializationProcedure
 
-    numberOfMandatoryArguments = 3
+    numberOfMandatoryArguments = 4
     if len(sys.argv) < numberOfMandatoryArguments + 1:
-        print("Not enough arguments specified while invoking the script! Please pass the number of monomers, the name of the architecture, and the bin width in the following format:")
-        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture> <binWidth>")
+        print("Not enough arguments specified while invoking the script! Please pass the number of monomers, the name of the architecture, the bin width, and the name of the initialization procedure in the following format:")
+        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture> <binWidth> <initializationProcedure>")
         print("Optional arguments for a run number and/or atom style can be passed to plot for just that run and a specific atomStyle.")
         print("Common atom styles include: atom, bond, angle. Default: angle")
         print(f"If 0 is passed as run number, the average over {numberOfRuns} will be performed")
@@ -73,6 +75,8 @@ def SetConstants():
     except ValueError:
         print(f"The entered binWidth {sys.argv[3]} cannot be converted to a number! Please provide a valid number")
         sys.exit()
+
+    initializationProcedure = sys.argv[4]
 
     # Reading diameter and setting box length:
     diameter = pt.ReadDiameter(numberOfMonomers, architecture)
@@ -96,7 +100,7 @@ def SetConstants():
 
 def GetReadFilePath(numberOfMonomers: int, architecture: str, runIndex: int) -> str:
     """Returns the file path to the mixed state created by the mixing algorithm"""
-    folder = sysPaths.GetFolder(sysPaths.CREATE_INITIAL_STATES, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)
+    folder = sysPaths.GetFolder(sysPaths.CREATE_INITIAL_STATES, numberOfMonomers, initializationProcedure)
     return f"{folder}{architecture}/langevin_mixed_state_{runIndex:02}.txt"
 
 def Read_LAMMPS_State_File(filePath: str) -> data3:
@@ -172,7 +176,7 @@ def ComputeAndPlotTotalDistribution(runIndex: int, lmp_data: data3.data, binWidt
     z_coords = lmp_data.get(atomsSectionHeader, 6) # z coords are in column 6
 
     probDensity, binEdges = CalculateSingleSnapshotDistribution(z_coords, binWidth, lower_limit, upper_limit)
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots()
     PlotDistribution(binEdges, probDensity, ax, showPlot = showPlot)
 
@@ -242,7 +246,7 @@ def PlotRegionalDistributions(binEdgesList: list[ArrayLike], probDensitiesList: 
     Accepts lists of distributions and the corresponding bin edges,
     run index of the run, a file path where the plot is to be saved,
     and a flag indicating whether the plot should be displayed"""
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_big_bold.mplstyle")
     fig, ax = plt.subplots(nrows = numberOfPolymers, sharex = True, sharey = True)
     for i in range(reg.NUMBER_OF_REGIONS):
         polymerIndex = i // reg.NUMBER_OF_POLYMER_REGIONS
@@ -279,7 +283,7 @@ def PlotRegionalDistributionsTogether(binEdgesList: list[ArrayLike], probDensiti
     Accepts lists of distributions and the corresponding bin edges,
     run index of the run, a file path where the plot is to be saved,
     and a flag indicating whether the plot should be displayed"""
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots(figsize = (12, 6))
     linestyles = ['--'] * reg.NUMBER_OF_REGIONS
     if reg.USE_REGIONS:
@@ -490,7 +494,7 @@ def PlotCrossSectionalDistribution(lmp_data: data3.data, noOfLongitudinalSlices:
     The position distribution in the x-y plane is plotted as a 2D scatter plot, with different colours for different regions.
     """
     # Setting up the figure:
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_big_bold.mplstyle")
     # Setting bigger axis and tick labels:
     # Updating axis ticks and labels font size:
     tickLabelSize = 20
