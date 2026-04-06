@@ -8,7 +8,7 @@
 #include <time.h>
 #include <assert.h>
 
-#include "../../../../Scripts/System_File_Paths/system_file_paths.h"
+#include "../../Global_Scripts/System_File_Paths/system_file_paths.h"
 #include GENERAL_FILE_METHODS
 #include LAMMPS_POSITION_FILE
 #include MONOMER_DISTRIBUTION
@@ -32,6 +32,7 @@ int equilibrationSteps; // The number of iterations/timesteps in the simulation 
 
 // Reading positions:
 char* directory; // The path to the directory where the simulation files are stored for the desired run
+char* initializationProcedure; // The name of the initialization procedure used to generate the initial state; this is used to read from the correct folder
 simulation_data read_data; // The struct to read the data
 
 // Calculating monomer distribution:
@@ -45,10 +46,11 @@ Architecture archDiameter;
 // Reads the arguments from the command line and sets the corresponding constants:
 void SetConstants(int argc, char** argv)
 {
-    int numberOfMandatoryArguments = 4;
+    int numberOfMandatoryArguments = 5;
     if(argc < numberOfMandatoryArguments + 1)
     {
-        printf("Not enough arguments passed! Please pass the number of monomers (integer), architecture(string), run number (integer), and the bin width (float) as arguments from the command line\n");
+        printf("Not enough arguments passed! Please pass the number of monomers (integer), architecture(string), run number (integer), the bin width (float), and the initialization procedure (string) as arguments from the command line in the following format:\n");
+        printf("./sectional.out <numberOfMonomers> <architecture> <runIndex> <binWidth> <initializationProcedure>\n");
         printf("Optionally an argument for the finite axis length (float) can be passed after the %i arguments.\n", numberOfMandatoryArguments);
         exit(1);
     }
@@ -58,7 +60,7 @@ void SetConstants(int argc, char** argv)
         architecture = argv[2]; // the second argument after the program name
         runIndex = atoi(argv[3]); // The simulation data files will be in the run1 folder by default
         binWidth = atof(argv[4]);
-
+        initializationProcedure = argv[5]; // the fifth argument after the program name
 
         // Verifying the arguments:
         if(numberOfMonomers == 0)
@@ -77,8 +79,9 @@ void SetConstants(int argc, char** argv)
         containsPreEquilibriumData = false;
         equilibrationSteps = 2 * pow(10, 8);
 
-        char* folderPrefix = CREATE_INITIAL_STATES;
-        SetDirectoryPath(&directory, folderPrefix, numberOfMonomers);
+        char* folderPrefixPath;
+        SetAbsolutePath(&folderPrefixPath, CREATE_INITIAL_STATES);
+        SetDirectoryPath(&directory, folderPrefixPath, numberOfMonomers, initializationProcedure);
 
         // Default value of axis length
         isLengthInfinite = true;
