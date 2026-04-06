@@ -12,15 +12,17 @@ from pathlib import Path
 
 
 # importing the scripts that contains all the local paths
-# The path to the directory containing this module is set as the environment variable PYTHONPATH
+sys.path.append(f"../../Global_Scripts/System_File_Paths/") # Adding the path to the system file paths module to the system path
 import system_file_paths as sysPaths 
+sys.path.append(f"{sysPaths.SEGREGATION}Analysis/")
 import Segregation_Parameters as segParam
 # Importing plotting tools:
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/")
 import PlottingTools as pt
 # import plotCoMDistribution:
 import plotCoMDistribution as plotCoM
 # import regions_config file
-sys.path.append(f"{sysPaths.POLYMER_PHYSICS}Scripts/Config_Files/")
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Config_Files/")
 import regions_config as reg
 
 # polymer information:
@@ -35,8 +37,9 @@ numberOfMonomers = 200 # each
 numberOfSteps = 10 ** 7
 dataInterval = 100
 numberOfBins = 65
-numberOfMandatoryArguments = 2
+numberOfMandatoryArguments = 3
 readFileNamePrefix = "com"
+initializationProcedure = "" # The name of the initialization procedure used to generate the initial state; this is used to read from the correct folder
 
 TAU_0 = 200 # The time scale in no of iterations for the LJ units; inverse of the timestep chosen
 # TODO: move this to SegregationParameters.py
@@ -60,10 +63,11 @@ def SetArchitectureAndMonomers():
     """Reads the argument(s) passed while invoking the script from the command line and sets it to the architecture and numberOfMonomers"""
     global architecture
     global numberOfMonomers
+    global initializationProcedure
     
     if len(sys.argv) < numberOfMandatoryArguments + 1:
-        print("Not enough arguments specified while invoking the script! Please pass the name of the number of monomers and the architecture in the following format:")
-        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture>")
+        print("Not enough arguments specified while invoking the script! Please pass the number of monomers (integer), the architecture (string), and the initialization procedure (string) in the following format:")
+        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture> <initializationProcedure>")
         print("An optional argument for the run index can be passed to plot the CoM data for only that run")
         print(f"Please ensure the Tau_0 value has been correctly set! Current value: {TAU_0}")
         quit() # terminating the script
@@ -76,10 +80,11 @@ def SetArchitectureAndMonomers():
         sys.exit(1)
 
     architecture = sys.argv[2]
+    initializationProcedure = sys.argv[3]
 
 def GetFolder(baseFolder: str, numberOfMonomers: int, architecture: str) -> str:
     """Returns the architecture folder after taking into account the special simulation, if any."""
-    return f"{sysPaths.GetFolder(baseFolder, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)}{architecture}/"
+    return f"{sysPaths.GetFolder(baseFolder, numberOfMonomers, initializationProcedure)}{architecture}/"
 
 def GetRunIndex():
     """Reads the third argument passed while invoking the script from the command line and returns it if it is an integer. This argument is optional"""
@@ -144,7 +149,7 @@ def ReadData(runIndex: int, readFileNamePrefix: str) -> tuple[ArrayLike, list[Ar
 
 def PlotData(timeSteps, z_com_list, showPlot: bool = False):
     """Takes the timesteps and the z_com data of the two polymers and plots one against the other. Plots a vertical red line at the time = segTime"""
-    folder = GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, architecture)
+    folder = GetFolder(sysPaths.SEGREGATION, numberOfMonomers, architecture)
     # fig1, ax1 = plt.subplots()
     fig2, ax2 = plt.subplots()
 
@@ -443,7 +448,7 @@ if __name__ == "__main__":
     SetConstants()
     # print(f"Length of Box: {boxLength}")
     runIndex = GetRunIndex()
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     if runIndex == -1: # no run argument passed
         if reg.USE_REGIONS:
             PlotRegionTimeSeriesForAllRuns()

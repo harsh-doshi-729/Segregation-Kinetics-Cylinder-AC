@@ -5,8 +5,8 @@
 #include <malloc.h>
 
 // importing paths file:
-#include "../../../../Scripts/System_File_Paths/system_file_paths.h"
-#include  GENERAL_FILE_METHODS
+#include "../../Global_Scripts/System_File_Paths/system_file_paths.h"
+#include GENERAL_FILE_METHODS
 #include LAMMPS_POSITION_FILE
 #include REGION
 
@@ -23,6 +23,7 @@ int runIndex;
 
 // Reading file tools:
 char* directory; // The path to the folder where the simulation data is stored
+char* initializationProcedure; // The name of the initialization procedure used to generate the initial state; this is used to read from the correct folder
 simulation_data read_data; // The struct to read a LAMMPS Position fump file
 
 // Region information:
@@ -30,22 +31,22 @@ region_data regionData; // The struct that stores region information
 
 // Options for the directory:
     int arrayLength = 2;
-    char* acceptedDirectoryLabels[] = {"new_segregation", "Create_Initial_States"};
-    char* acceptedDirectories[] = {NEW_SEGREGATION, CREATE_INITIAL_STATES}; // The corresponding directory paths
+    char* acceptedDirectoryLabels[] = {"Segregation", "Create_Initial_States"};
+    char* acceptedDirectories[] = {SEGREGATION, CREATE_INITIAL_STATES}; // The corresponding directory paths
     char* directoryLabel; // The label for the desired directory
     int directoryIndex; // The index in the directory arrays for the desired directory
 
 void SetConstants(int argc, char** argv)
 {
     directoryIndex = 0;
-    directoryLabel = acceptedDirectoryLabels[directoryIndex]; // optional argument; default value: new_segregation
-    int numberOfMandatoryArguments = 3;
+    directoryLabel = acceptedDirectoryLabels[directoryIndex]; // optional argument; default value: Segregation
+    int numberOfMandatoryArguments = 4;
 
 
     if(argc < numberOfMandatoryArguments + 1)
     {
-        printf("Not enough arguments passed! Please pass the number of monomers, the name of the architecture, and the run index.\n");
-        printf("Format: ./a.out <numberOfMonomers> <architecture> <runIndex>\n");
+        printf("Not enough arguments passed! Please pass the number of monomers (integer), the name of the architecture (string), the run index (integer), and the initialization procedure (string) in the following format:\n");
+        printf("Format: ./a.out <numberOfMonomers> <architecture> <runIndex> <initializationProcedure>\n");
         printf("An optional argument for the directory can be passed. Accepted options: ");
         PrintArray(arrayLength, acceptedDirectoryLabels);
         exit(1);
@@ -69,6 +70,8 @@ void SetConstants(int argc, char** argv)
             exit(1);
         }
 
+        initializationProcedure = argv[4];
+
         totalMonomers = numberOfPolymers * numberOfMonomers;
 
         if(argc > numberOfMandatoryArguments + 1) // optional argument passed
@@ -84,7 +87,9 @@ void SetConstants(int argc, char** argv)
             if(strcasecmp(directoryLabel, acceptedDirectoryLabels[i]) == 0)
             {
                 isArgumentValid = true; // since the arguments matched one of the acceptable options
-                SetDirectoryPath(&directory, acceptedDirectories[i], numberOfMonomers);
+                char* folderPrefixPath;
+                SetAbsolutePath(&folderPrefixPath, acceptedDirectories[i]);
+                SetDirectoryPath(&directory, folderPrefixPath, numberOfMonomers, initializationProcedure);
                 directoryIndex = i;
                 break;
             }

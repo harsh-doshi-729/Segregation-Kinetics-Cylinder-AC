@@ -12,12 +12,14 @@ from pathlib import Path
 from typing import Tuple, List
 from numpy.typing import ArrayLike
 # importing the scripts that contains all the local paths
-# The path to the directory containing this module is set as the environment variable PYTHONPATH
+sys.path.append(f"../../Global_Scripts/System_File_Paths/") # Adding the path to the system file paths module to the system path
 import system_file_paths as sysPaths
+# Importing plotting tools:
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/")
 import PlottingTools as pt
 
 # Importing the region Config file:
-sys.path.append(f"{sysPaths.POLYMER_PHYSICS}Scripts/Config_Files/")
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Config_Files/")
 import regions_config as reg
 import plotMonomerDensity
 
@@ -27,6 +29,7 @@ indexOfPolymer = 1
 architecture = "Arc2"
 runIndex = 1
 boxLength = 25
+initializationProcedure = "" # The name of the initialization procedure used to generate the initial state; this is used to read from the correct folder
 
 numberOfRuns = 50
 numberOfMonomers = 200 # each 
@@ -35,16 +38,16 @@ dataInterval = 100
 numberOfBins = 65
 acceptedModes = ["timeseries", "squared_timeseries", "runs_squared_timeseries", "squared_stddev", "distribution", "test_outliers"]
 chosenMode = "timeseries" # can be "timeseries", "squared_timeseries", or "distribution"
-numberOfMandatoryArguments = 2
+numberOfMandatoryArguments = 3
 
 def GetFolder(numberOfMonomers: int, architecture: str) -> str:
     """Returns the parent folder where all the segregation files lie"""
-    prefix = sysPaths.GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)
+    prefix = sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, initializationProcedure)
     return f"{prefix}{architecture}/"
 
 def GetPreviousAttemptsFolder(numberOfMonomers: int, architecture: str, simulationName: str) -> str:
     """Returns the path of the segregation times file in a particular backed-up smulation folder"""
-    return f"{sysPaths.NEW_SEGREGATION}b{numberOfMonomers}/Previous_Attempts/{simulationName}/{architecture}/"
+    return f"{sysPaths.SEGREGATION}b{numberOfMonomers}/{simulationName}/{architecture}/"
 
 
 def SetConstants():
@@ -67,10 +70,11 @@ def SetArchitectureAndMonomers():
     """Reads the argument(s) passed while invoking the script from the command line and sets it to the architecture and numberOfMonomers"""
     global architecture
     global numberOfMonomers
+    global initializationProcedure
     
     if len(sys.argv) < numberOfMandatoryArguments + 1:
-        print("Not enough arguments specified while invoking the script! Please pass the name of the number of monomers and the architecture in the following format:")
-        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture>")
+        print("Not enough arguments specified while invoking the script! Please pass the number of monomers (integer), the architecture (string), and the initialization procedure (string) in the following format:")
+        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture> <initializationProcedure>")
         print("An optional argument for the operation mode and/or the run index can be passed to plot the CoM data for only that run")
         print(f"Accepted operation modes: {acceptedModes}")
         quit() # terminating the script
@@ -81,6 +85,7 @@ def SetArchitectureAndMonomers():
         print(f"The entered numberOfMonomers {sys.argv[1]} cannot be converted to a number! Please provide a valid number")
         quit()
     architecture = sys.argv[2]
+    initializationProcedure = sys.argv[3]
 
 def GetOptionalArguments():
     """
@@ -320,7 +325,7 @@ def PlotData(timeSteps, z_com_list, firstPassageTime, segTime, showPlot: bool = 
     """Takes the timesteps and the z_com data of the two polymers and plots one against the other. Plots a vertical red line at the time = segTime"""
     folder = GetFolder(numberOfMonomers, architecture)
     # fig1, ax1 = plt.subplots()
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig2, ax2 = plt.subplots()
 
     didPolymersSegregate = True
@@ -349,7 +354,7 @@ def PlotData(timeSteps, z_com_list, firstPassageTime, segTime, showPlot: bool = 
 
     if segParam.PLOT_INSET: # Plotting segregation trajectory comparisons of AOI_COMPARE as an inset figure
         # Creating the inset axis:
-        mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/inset.mplstyle")
+        mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/inset.mplstyle")
         axin = ax2.inset_axes(segParam.INSET_POSITION)
         PlotComparisonInSinglePlot(axin, runIndex)
         # Setting axis labels and legend:
@@ -527,7 +532,7 @@ def PlotSquaredDeltaCOMDisplacementOnAxis(ax: mpl.axes.Axes, runIndex: int = -1,
                 runDistances[i] = runDistances[i] / boxLength**2
         yLabelModifier = r"/ $L^2$"
     
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     # Scaling times:
     if normalizeTime:
         if runIndex == -1: # normalizing for all runs:
@@ -588,7 +593,7 @@ def PlotSqDeltaCOMDisplacement(runIndex: int = -1, showPlot: bool = False) -> No
     Plots the squared delta CoM displacement.
     The runIndex can be passed to compute the squared distance for that run; otherwise a mean over all runs is plotted.
     """
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots()
     plotDiffusionGuide = False
     if sysPaths.IsCylinderInfinite() and segParam.USE_LOGLOG_PLOT and not segParam.NORMALIZE_TIME:
@@ -638,7 +643,7 @@ def PlotSqDeltaCOMArcComparison(arcList: list[str], showPlot: bool = False, runI
     """
     global architecture
     folder = GetFolder(numberOfMonomers, architecture)
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots()
     for i in range(len(arcList)):
         architecture = arcList[i]
@@ -690,7 +695,7 @@ def PlotSqDeltaCOMSizeComparison(sizeList: list[int], arcList: list[str], runInd
     global architecture, numberOfMonomers, diameter, boxLength
     segCriteria = ["f045_s040_t00", "f048_s043_t00"] # Segregation criteria for different polymer sizes
     folder = GetFolder(numberOfMonomers, architecture)
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots()
     # Darker gradients for better visibility on white backgrounds
     blue_gradient = ["#003366", "#004080", "#0059b3", "#0073e6", "#3399ff"]
@@ -744,7 +749,7 @@ def PlotSquaredCOMRunComparison(runIndices: list[int], showPlot: bool = False, g
         - groupName: The name of the group of runs being plotted. This is just for labelling purposes.
         - saveRunLabel: The label to be used while saving the figure.
     """
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots()
     for runIndex in runIndices:
         PlotSquaredDeltaCOMDisplacementOnAxis(ax, runIndex)
@@ -775,7 +780,7 @@ def PlotSqDeltaCOMGroupsComparison(showPlot: bool = False) -> None:
     The groups are specified in the segParam.GROUP_INDICES variable in Segregation_Parameters.py
     """
     folder = GetFolder(numberOfMonomers, architecture)
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots()
     segParam.UpdateGroupIndices(set(range(1, numberOfRuns + 1)))
     runLimit = 5
@@ -863,7 +868,7 @@ def PlotSqCOMStdDev(normalize: bool = False, showPlot: bool = False) -> None:
                     If true, the standard deviation is unitless, and standardized.
         - showPlot: Whether to show the plot or not.
     """
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots()
     timeSteps, stdDev = CalculateSqCOMStdDev(normalize, segParam.SKIP_OUTLIER_RUNS) # In units of the simulation
 
@@ -1002,7 +1007,7 @@ def PlotSqCOMStdDevArcComparison(arcList: list[str], normalize: bool = False, sh
     """
     global architecture
     folder = GetFolder(numberOfMonomers, architecture)
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     mpl.rcParams['axes.formatter.limits'] = (-3, 3) # To avoid scientific notation on axes
     fig, ax = plt.subplots()
     PlotSqCOMStdDevCompOnAxis(ax, arcList, normalize, skipOutlierRuns=segParam.SKIP_OUTLIER_RUNS, plotMedianTime = True, marker = '.')
@@ -1051,7 +1056,7 @@ def PlotSqCOMStdDevInitComparison(initList: list[str], arcList: list[str], norma
     """
     global architecture
     saveFolder = GetFolder(numberOfMonomers, architecture)
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     # Define a colour wheel with 5 contrasting and visible colours for a white background
     fig, ax = plt.subplots()
     fillStyles = ["full", "none"]
@@ -1119,7 +1124,7 @@ def PlotSegregationComparison(runIndex: int) -> None:
     """Plots the segregation CoM trajectories of different architectures in a subplots figure.
     The architectures are specified in the AOI_COMPARE variable in Segregation_Parameters.py"""
     global architecture
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots(nrows = segParam.NROWS, ncols = segParam.NCOLS, sharex = True, sharey = True)
     for n in range(len(segParam.AOI_COMPARE)):
         architecture = segParam.AOI_COMPARE[n]
@@ -1150,7 +1155,7 @@ def PlotSegregationComparison(runIndex: int) -> None:
     fig.supylabel(r"$\Delta z_{CoM}$ %s" % (yLabelModifier))
 
     plt.show()
-    folder = sysPaths.GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)
+    folder = sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)
     fig.savefig(f"{folder}segTrajectoryComparison.png")
     plt.close(fig)
 
@@ -1175,8 +1180,8 @@ def PlotOnlySinglePlotComparison(runIndex: int, showPlot: bool = False) -> None:
     """
     Plots the segregation trajectories for architectures indicated in AOI_COMPARE in a single plot for the passed run.
     """
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
-    saveFolder = f"{sysPaths.GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)}Segregation_Trajectory_Comparison/"
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
+    saveFolder = f"{sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)}Segregation_Trajectory_Comparison/"
     # Making directory if it does not exist:
     pathlib.Path(saveFolder).mkdir(parents = True, exist_ok = True)
     fig, ax = plt.subplots()
@@ -1224,7 +1229,7 @@ def ReadRegionData(folder: str, runIndex: int) -> Tuple[ArrayLike, List[ArrayLik
 
 def ReadAndPlotRegionData(showPlot: bool = False) -> None:
     """Invokes the ReadRegionData function and plots the CoM Time series for all the regions"""
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     folder = GetFolder(numberOfMonomers, architecture)
     fig, ax = plt.subplots()
     # Setting colour scheme for regions:
@@ -1501,7 +1506,7 @@ def PlotCOMDistanceDistribution(numberOfBins: int = 500, runIndex: int = -1, sho
     if segParam.USE_DISTRIBUTION_CUTOFF:
         cutoffLabel = f", Cutoff = {int(segParam.COM_DISTRIBUTION_CUTOFF / segParam.TAU_0) :.1E} $\\tau_0$"
     # Plotting:
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/bold.mplstyle")
     fig, ax = plt.subplots()
     PlotCOMDistanceDistributionOnAxis(ax, numberOfBins, runIndex, readDistribution = segParam.READ_COM_DISTANCE_DISTRIBUTION, writeDistribution = segParam.WRITE_COM_DISTANCE_DISTRIBUTION)
     ax.set_title(f"COM Distance Distribution for two {architecture} polymers\n{runIndexLabel}, {numberOfMonomers} monomers, {sysPaths.SPECIAL_SIMULATION}{cutoffLabel}")
@@ -1532,7 +1537,7 @@ def PlotDistributionComparison(arcList: list[str], runIndex: int = -1, numberOfB
     cutoffLabel = ""
     if segParam.USE_DISTRIBUTION_CUTOFF:
         cutoffLabel = f", Cutoff = {int(segParam.COM_DISTRIBUTION_CUTOFF / segParam.TAU_0) :.1E} $\\tau_0$"
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/bold.mplstyle")
     fig, ax = plt.subplots()
     for arc in arcList:
         architecture = arc
@@ -1556,7 +1561,7 @@ def PlotDistributionRunComparison(numberOfBins: int = 500, showPlot: bool = Fals
     The runs are specified in the Segregation_Parameters.py script.
     """
     folder = GetFolder(numberOfMonomers, architecture)
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/bold.mplstyle")
     fig, ax = plt.subplots()
     segParam.UpdateGroupIndices(set(range(1, numberOfRuns + 1))) # updating the group indices to include all runs
     for n in range(len(segParam.GROUP_INDICES)):
