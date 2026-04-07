@@ -197,7 +197,7 @@ def AddVerticalArrow(ax, xy: tuple[float, float], arrowStyle: str, color: str, t
     ax.annotate(text, xy, xytext, arrowprops = dict(arrowstyle=arrowStyle, color = color))
 
 def PlotVerticalLine(axes, time: int):
-    axes.axvline(x = time, color = 'r', linestyle = '--', label = rf'Time of Segregation = {time} $\times 10^5\tau_0$')
+    axes.axvline(x = time, color = 'r', linestyle = '--', label = rf'Time of Segregation') # = {time} $\times 10^5\tau_0$')
 
 def FindSegregationTime(z_com_list):
     # debugging:
@@ -1267,9 +1267,9 @@ def ReadAndPlotRegionData(showPlot: bool = False) -> None:
     if segParam.SHOW_TITLE:
         ax.set_title(f"CoM Time Series of various regions\n {numberOfPolymers} {architecture} polymer(s), Run {runIndex}")
     else:
-        ax.text(0.02, 0.85, "%s\n%s\n%s" % (segParam.GetAliasArchitecture(architecture), rf"$N={numberOfMonomers}$", segParam.ORIENTATION_LABEL), transform = ax.transAxes, verticalalignment='center', horizontalalignment='left', bbox=dict(facecolor='white', alpha=1))
+        ax.text(0.75, 0.85, "%s\n%s\n%s" % (segParam.GetAliasArchitecture(architecture), rf"$N={numberOfMonomers}$", segParam.ORIENTATION_LABEL), transform = ax.transAxes, verticalalignment='center', horizontalalignment='left', bbox=dict(facecolor='white', alpha=1))
     mpl.rcParams["legend.fontsize"] = 20
-    leg = ax.legend(loc = 'lower left')
+    leg = ax.legend(loc = 'center right')
     # Increasing legend line thickness:
     for line in leg.get_lines():
         line.set_linewidth(pt.LEGEND_LINEWIDTH * line.get_linewidth())
@@ -1615,7 +1615,7 @@ if __name__ == "__main__":
             if not reg.USE_REGIONS:
                 timeSteps, z_com_list = ReadData(runIndex)
                 firstPassageTime, segTime = FindImprovedSegregationTime(z_com_list)
-                PlotData(timeSteps, z_com_list, segTime, True)
+                PlotData(timeSteps, z_com_list, firstPassageTime, segTime, True)
                 if(segTime == -1):
                     print(f"Run {runIndex} did not show segregation\n")
                 else:
