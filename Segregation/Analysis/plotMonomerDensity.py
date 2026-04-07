@@ -23,6 +23,8 @@ architecture = ""
 numberOfRuns = 50
 runIndex = -1
 
+initializationProcedure = "" # A string to specify the initialization procedure used for the system. This is used to determine the folder where the data is stored
+
 numberOfMonomers = 200 # each 
 numberOfSteps = 4 * 10 ** 7
 numberOfBins = 65
@@ -35,15 +37,17 @@ def SetConstants():
     global numberOfMonomers
     global runIndex
     global boxLength
+    global initializationProcedure
 
-    numberOfMandatoryArguments = 2
+    numberOfMandatoryArguments = 3
     if len(sys.argv) < numberOfMandatoryArguments + 1:
-        print("Not enough arguments specified while invoking the script! Please pass the name of the architecture and the number of monomers in the following format:")
-        print("python /<path>/plotMonomerDensity.py <noOfMonomers> <architecture>")
-        print("Optionally, an argument for the run number can be passed after these two arguments.")
+        print("Not enough arguments specified while invoking the script! Please pass the number of monomers (integer), the architecture (string), and the initialization procedure (string) in the following format:")
+        print("python /<path>/plotMonomerDensity.py <noOfMonomers> <architecture> <initializationProcedure>")
+        print("Optionally, an argument for the run number can be passed after these three arguments.")
         quit() # terminating the script
     
     architecture = sys.argv[2]
+    initializationProcedure = sys.argv[3]
     # checking if the number of monomers and regions are valid:
     try:
         numberOfMonomers = int(sys.argv[1])
@@ -63,7 +67,7 @@ def SetConstants():
 
 def GetFolder(special_simulation: str = sysPaths.SPECIAL_SIMULATION) -> str:
     """Returns the folder where the segregation data is stored"""
-    prefix = sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, special_simulation)
+    prefix = sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, initializationProcedure)
     return f"{prefix}{architecture}/"
 
 def ShiftBinEdges(binLeftEdges):
@@ -441,7 +445,7 @@ def PlotAndSaveRegionwiseRadialDistribution(showPlot: bool = False) -> None:
 #script:
 if __name__ == "__main__":
     SetConstants()
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/bold.mplstyle")
     if runIndex == -1:
         for runIndex in range(1, numberOfRuns + 1):
             if reg.USE_REGIONS:
