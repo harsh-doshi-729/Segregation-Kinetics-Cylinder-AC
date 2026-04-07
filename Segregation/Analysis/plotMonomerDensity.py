@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from decimal import Decimal
+from pathlib import Path
 import sys
 import math
 from numpy.typing import ArrayLike
@@ -287,7 +288,7 @@ def PlotRadialDistribution(numberOfMonomers: int, architecture: str, filePath: s
         volume_factor = "2 \pi r dr"
     else:
         volume_factor = "2 \pi r L dr"
-    ax.set_ylabel(r"$n(r$%s$)/(%s)$%s" % (xLabelModifier, volume_factor, yAxisLabel))
+    ax.set_ylabel(r"$\langle n(r$%s$) \rangle/(%s)$%s" % (xLabelModifier, volume_factor, yAxisLabel))
     if len(label) > 0:
         leg = ax.legend()
         # Increasing legend line thickness:
@@ -310,6 +311,8 @@ def PlotAndSavePolymerDistribution(showPlot: bool = False) -> None:
 
     if showPlot:
         plt.show(block = True)
+    # Saving the figure:
+    Path(f"{folder}Analysis/MonomerDistribution/").mkdir(parents=True, exist_ok=True)
     fig.savefig(f"{folder}Analysis/MonomerDistribution/MonomerDistribution_r{runIndex}{segParam.FIG_EXT}")
     plt.close(fig) # closing the figure to save memory
     print(f"Plotted Monomer Distribution for {architecture} Run {runIndex}")
@@ -325,6 +328,8 @@ def PlotAndSaveRegionDistribution(numberOfRegions: int, showPlot: bool = False) 
 
     if showPlot:
         plt.show(block = True)
+    # Saving the figure:
+    Path(f"{folder}Analysis/MonomerDistribution/").mkdir(parents=True, exist_ok=True)
     fig.savefig(f"{folder}Analysis/MonomerDistribution/MonomerDistribution_r{runIndex}{segParam.FIG_EXT}")
     plt.close(fig) # closing the figure to save memory
     print(f"Plotted Monomer Distribution for {architecture} Run {runIndex}")
@@ -339,6 +344,8 @@ def PlotAndSaveRadialDistribution(showPlot: bool = False) -> None:
     
     if showPlot:
         plt.show(block = True)
+    # Saving the figure:
+    Path(f"{folder}Analysis/RadialDistribution/").mkdir(parents=True, exist_ok=True)
     fig.savefig(f"{folder}Analysis/RadialDistribution/RadialDistribution_r{runIndex}{segParam.FIG_EXT}")
     plt.close(fig) # closing the figure to save memory
     print(f"Plotted Radial Monomer Distribution for {architecture} Run {runIndex}")
@@ -386,7 +393,7 @@ def PlotRadialInitializationComparison(special_simulations: list[str], numberOfM
         # Rescaling the bin centres by box length
         if segParam.RESCALE_RADIUS:
             binCentres = binCentres / boxRadius
-            xLabelModifier = "/ R"
+            xLabelModifier = "/ $R$"
         ax.plot(binCentres, radialNumberDensity, linestyle = "--", marker = '.', label = segParam.GetAliasSimulation(special_simulation))
         # plt.bar(binsLeftEdges, distribution, width = binWidth, align = 'edge', alpha = 0.5, label = f'Polymer {indexOfPolymer}')
         timeLabel = rf"{Decimal(numberOfSteps):.0E}$\tau_0$"
@@ -398,7 +405,7 @@ def PlotRadialInitializationComparison(special_simulations: list[str], numberOfM
         else:
             volume_factor = "2 \pi r L dr"
         # ax.set_ylabel(r"$\left\langle n(r%s) \right\rangle \: / \: 2N$%s" % (xLabelModifier, yAxisLabel))
-        ax.set_ylabel(r"$n(r%s) / (%s)$ %s" % (xLabelModifier, volume_factor, yAxisLabel))
+        ax.set_ylabel(r"$\langle n(r%s) \rangle / (%s)$ %s" % (xLabelModifier, volume_factor, yAxisLabel))
         # Debugging: Calculating area under the curve
         # print(f"{label} Area: {CalculateAreaUnderCurve(distribution, binWidth, isRadial = True)}")
     leg = ax.legend()
@@ -420,8 +427,9 @@ def PlotRadialInitializationComparison(special_simulations: list[str], numberOfM
 
     if showPlot:
         plt.show(block = True)
-    
+    # Saving the figure:
     folder = f"{sysPaths.GetFolder(baseFolder, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)}{architecture}/"
+    Path(f"{folder}Analysis/RadialDistribution/").mkdir(parents=True, exist_ok=True)
     fig.savefig(f"{folder}Analysis/RadialDistribution/RadialDistribution_InitializationComparison_r{runIndex}{segParam.FIG_EXT}")
     plt.close(fig) # closing the figure to save memory
     print(f"Plotted Radial Monomer Distribution Comparison for {architecture} Run {runIndex}")
@@ -438,6 +446,8 @@ def PlotAndSaveRegionwiseRadialDistribution(showPlot: bool = False) -> None:
 
     if showPlot:
         plt.show(block = True)
+    # Saving the figure:
+    Path(f"{folder}Analysis/RadialDistribution/").mkdir(parents=True, exist_ok=True)
     fig.savefig(f"{folder}Analysis/RadialDistribution/regionwiseDistribution_r{runIndex}.png")
     plt.close(fig) # closing the figure to save memory
     print(f"Plotted regionwise Radial Monomer Distribution for {architecture} Run {runIndex}")
@@ -445,7 +455,7 @@ def PlotAndSaveRegionwiseRadialDistribution(showPlot: bool = False) -> None:
 #script:
 if __name__ == "__main__":
     SetConstants()
-    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     if runIndex == -1:
         for runIndex in range(1, numberOfRuns + 1):
             if reg.USE_REGIONS:
@@ -463,7 +473,7 @@ if __name__ == "__main__":
         else:
             PlotAndSavePolymerDistribution(showPlot = True)
         if segParam.PLOT_COMPARISON:
-            PlotRadialInitializationComparison(segParam.SPECIAL_SIMULATIONS, numberOfMonomers, architecture, boxLength, runIndex, True)
+            PlotRadialInitializationComparison(segParam.SPECIAL_SIMULATIONS, numberOfMonomers, architecture, boxLength, runIndex, showPlot = True)
         else:
             PlotAndSaveRadialDistribution(True)
         PlotAndSaveRegionwiseRadialDistribution(True)
