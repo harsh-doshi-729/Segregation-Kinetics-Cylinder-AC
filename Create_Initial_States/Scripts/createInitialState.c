@@ -24,19 +24,21 @@ char* architecture;
 int numberOfPolymers;
 int numberOfMonomers;
 int runIndex;
-int numberOfMandatoryArguments = 2;
+int numberOfMandatoryArguments = 3;
 bool useDifferentBondTypeForCrossLinks = false;
 double* offsetAngles; // An array of offset angles (in degrees) read from the top of the initial file; one for each polymer
+char* initializationProcedure = ""; // A string to store the name of the initialization procedure desired. This will be the name of the folder where the file will be created
 
 Architecture archCrossLinks; // The cross links architecture object
 
 // Sets the values of the global constant variables based on the arguments passed
 void SetConstants(int argc, char** argv)
 {
-    char* templateDirectory = HOME_DIR CREATE_INITIAL_STATES; // default value for the location of the initial configuration template
+    char* templateDirectory; // default value for the location of the initial configuration template
+    SetAbsolutePath(&templateDirectory, CREATE_INITIAL_STATES); // setting the default template directory to be Create_Initial_States/; this can be changed by passing a different directory as an argument
     if(argc < numberOfMandatoryArguments + 1) // number of arguments passed is less than expected
     {
-        printf("Not enough arguments passed! Please pass the architecture(string) and the number of monomers(int) as arguments from the command line\nFor example:\n./createInitialStateExecuatable.out 200 Arc-1-2\n");
+        printf("Not enough arguments passed! Please pass the number of monomers (int), the architecture (string), and the initialization procedure (string) as arguments from the command line\nFor example:\n./createInitialStateExecuatable.out 200 Arc-1-2 fene_recenter\n");
         printf("Optional arguments for the particular run number and/or a template location directory can also be passed after the mandatory arguments if desired\n");
         printf("If a run index (integer) is passed, then the configuration write file is saved to a run folder. If a template location directory is passed, the entire process is performed in that directory.\n");
         exit(1);
@@ -48,6 +50,8 @@ void SetConstants(int argc, char** argv)
 
         numberOfMonomers = atoi(argv[1]); // the second argument after the program name
         //atoi(char*) is a function that takes an argument and returns the int expressed as the character string. If the characters are not a number, it returns 0
+
+        initializationProcedure = argv[3]; // the third argument after the program name
         if(numberOfMonomers == 0)
         {
             printf("Second argument \"%s\" passed was not a valid value for number of monomers! Please pass a valid integer\n", argv[1]);
@@ -72,13 +76,14 @@ void SetConstants(int argc, char** argv)
             }
             else // more than 1 argument passed
             {
+                free(templateDirectory); // freeing the memory allocated for the default template directory path
                 templateDirectory = argv[numberOfMandatoryArguments + 2];
                 // TODO: check if the directory exists
             }
         }
     }
     // Set directory adds the corresponding subdirectory for the number of monomers to the passed folderPath
-    SetDirectoryPath(&directory, templateDirectory, numberOfMonomers);
+    SetDirectoryPath(&directory, templateDirectory, numberOfMonomers,  initializationProcedure);
 }
 
 // Initializes the offset angles array
