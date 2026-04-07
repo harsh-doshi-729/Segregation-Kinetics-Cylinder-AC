@@ -139,15 +139,16 @@ def ReadEffectiveAxisLength(numberOfMonomers: int, architecture: str, cylinderDi
     sys.exit(1)
     return
 
-def GetAxisLength(numberOfMonomers: int, architecture: str, cylinderDiameter: float|None = None) -> float:
+def GetAxisLength(numberOfMonomers: int, architecture: str, initializationProcedure: str, cylinderDiameter: float|None = None) -> float:
     """
     Returns the axis length for finite cylinders and the effective axis length for infinite cylinders.
     Args:
         -numberOfMonomers: The number of monomers present in a single polymer
         -architecture: The name of the topology or architecture
+        -initializationProcedure: The name of the initialization procedure used to generate the initial state
         -cylinderDiameter: (Optional for finite cylinder) The diameter of the cylinder for which the effective length is desired (format: float with two decimal places)
     """
-    if sysPaths.IsCylinderInfinite():
+    if sysPaths.IsCylinderInfinite(initializationProcedure):
         if cylinderDiameter is None:
             raise ValueError("cylinderDiameter argument was not passed. cylinderDiameter argument must be passed if the cylinder is infinite.")
         return ReadEffectiveAxisLength(numberOfMonomers, architecture, cylinderDiameter)
