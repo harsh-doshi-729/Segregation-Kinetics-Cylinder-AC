@@ -23,6 +23,7 @@ int numberOfMonomers; // The number of monomers in a single polymer
 int numberOfPolymers = 2; // The number of polymers in the system
 int totalMonomers; // The total number of monomers in the system
 char* architecture;
+char* initializationProcedure; // The name of the initialization procedure used for the simulation; used to set the directory path for reading the files
 
 // Run information:
 int runIndex = -1;
@@ -54,10 +55,10 @@ void PrintPair(Pair pair)
 // Accepts the arguments from the command line and sets them to global variables
 void SetConstants(int argc, char** argv)
 {
-    int numberOfMandatoryArguments = 3;
+    int numberOfMandatoryArguments = 4;
     if(argc < numberOfMandatoryArguments + 1)
     {
-        printf("Not enough arguments passed! Please pass the number of monomers (integer), the architecture(string), and the run index (integer) as arguments from the command line\n");
+        printf("Not enough arguments passed! Please pass the number of monomers (integer), the architecture(string), the run index (integer), and the initialization procedure (string) as arguments from the command line\n");
         printf("An optional flag (0 or 1) argument can be passed to indicate whether the internal concatenations should be checked too.\n");
         exit(1);
     }
@@ -80,11 +81,13 @@ void SetConstants(int argc, char** argv)
             exit(1);
         }
 
+        initializationProcedure = argv[4];
+
         // Setting absolute path for directory:
         char* checkConcatenationPath;
         SetAbsolutePath(&checkConcatenationPath, CHECK_CONCATENATION);
         // Setting directory:
-        SetDirectoryPath(&directory, checkConcatenationPath, numberOfMonomers);
+        SetDirectoryPath(&directory, checkConcatenationPath, numberOfMonomers, initializationProcedure);
         free(checkConcatenationPath);
 
         // Optional argument
