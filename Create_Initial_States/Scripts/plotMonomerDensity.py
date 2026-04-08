@@ -602,17 +602,17 @@ if __name__ == "__main__":
     else:
         mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_big_bold.mplstyle") # Setting the mpl style sheet
         # PlotDistribution(True)
-        # PlotDistributionForAllSections(numberOfSections = 8, showPlot = True)
+        PlotDistributionForAllSections(numberOfSections = 8, showPlot = True)
         mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle") # Setting the mpl style sheet
-        # if reg.USE_REGIONS:
-        #     if not segParam.USE_SINGLE_SNAPSHOT:
-        #         PlotRegionDistributions(True)
-        #     else:
-        #         PlotSingleSnapshotRegionDistributions(True)
-        # if segParam.PLOT_INIT_COMPARISON:
-        #     plotMonomerDensity.PlotRadialInitializationComparison(segParam.SPECIAL_SIMULATIONS, numberOfMonomers, architecture, boxLength, runIndex, sysPaths.CREATE_INITIAL_STATES, True)
-        # else:
-        #     PlotRadialDistribution(True)
+        if reg.USE_REGIONS:
+            if not segParam.USE_SINGLE_SNAPSHOT:
+                PlotRegionDistributions(True)
+            else:
+                PlotSingleSnapshotRegionDistributions(True)
+        if segParam.PLOT_INIT_COMPARISON:
+            plotMonomerDensity.PlotRadialInitializationComparison(segParam.SPECIAL_SIMULATIONS, numberOfMonomers, architecture, boxLength, runIndex, sysPaths.CREATE_INITIAL_STATES, True)
+        else:
+            PlotRadialDistribution(True)
         # PlotAndSaveRegionwiseRadialDistribution(True)
         PlotPolymerDistributions(True)
         # PlotTotalDistribution(True)
