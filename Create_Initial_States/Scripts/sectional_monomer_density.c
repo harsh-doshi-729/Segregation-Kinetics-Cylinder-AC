@@ -94,7 +94,7 @@ void SetConstants(int argc, char** argv)
             axisLength = 1000; // Length of long cylinder in case of 500 monomers
         }
         // Initializing architecture object
-        InitializeArcAndReadDiameter(&archDiameter, numberOfMonomers, architecture);
+        InitializeArcAndReadDiameter(&archDiameter, numberOfMonomers, architecture, initializationProcedure);
 
         // Checking for optional argument
         if(argc > numberOfMandatoryArguments + 1)

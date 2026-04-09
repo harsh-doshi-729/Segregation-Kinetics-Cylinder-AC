@@ -80,7 +80,7 @@ void SetConstants(int argc, char** argv)
             exit(1);
         }
 
-        InitializeArcAndReadDiameter(&archDiameter, numberOfMonomers, architecture);
+        InitializeArcAndReadDiameter(&archDiameter, numberOfMonomers, architecture, initializationProcedure);
         radius = archDiameter.confinementDiameter / 2;
 
         totalMonomers = numberOfMonomers * numberOfPolymers;

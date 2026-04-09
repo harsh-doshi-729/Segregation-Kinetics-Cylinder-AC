@@ -228,10 +228,23 @@
         }
     }
 
-    // Sets the file path to the diamaters database file based on the number of monomers passed
-    void SetDiametersDatabaseFilePath(char** filePathPointer, int numberOfMonomers)
+    // Returns whether the passed proceure name involves an infinite cylinder for confinement
+    bool IsCylinderInfinite(char* initializationProcedure)
     {
-        int bytes = asprintf(filePathPointer, "%sb%i/Diameters.csv", HOME_DIR SEGREGATION, numberOfMonomers);
+        char query[] = "inf_";
+        return strncmp(initializationProcedure, query, strlen(query)) == 0; // If 'inf_' exists as the start of the initialization procedure string
+    }
+
+    // Sets the file path to the diamaters database file based on the number of monomers passed
+    void SetDiametersDatabaseFilePath(char** filePathPointer, int numberOfMonomers, char* initializationProcedure)
+    {
+        char* diameterFileName;
+        if(IsCylinderInfinite(initializationProcedure))
+            diameterFileName = "c_Diameters.csv"; // Diameters for constant confinement (infinite cylinder)
+        else
+            diameterFileName = "Diameters.csv"; // Diameter for constant volume fraction (finite cylinder)
+
+        int bytes = asprintf(filePathPointer, "%sb%i/%s", HOME_DIR SEGREGATION, numberOfMonomers, diameterFileName);
         if(bytes == -1)
         {
             printf("Memory could not be allocated for the diameters database file name!\n");
@@ -248,13 +261,6 @@
             printf("Memory could not be allocated for the axis length database file name!\n");
             exit(1);
         }
-    }
-
-    // Returns whether the SPECIAL_SIMULATION specified in system_file_paths.h involves an infinite cylinder for confinement
-    bool IsCylinderInfinite(void)
-    {
-        char query[] = "inf_";
-        return strncmp(SPECIAL_SIMULATION, query, strlen(query)) == 0; // If 'inf_' exists as the start of the special simulation string
     }
 
     // Prints a string array

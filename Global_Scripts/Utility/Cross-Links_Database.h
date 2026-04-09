@@ -271,14 +271,14 @@
     // Args:
     // - architecture: The pointer to the Architecture struct instance for which the data is to be read
     // - numberOfMonomers: The number of monomers present in a single polymer of the system
-    void ReadDiameterAndAxisLength(Architecture* architecture, int numberOfMonomers)
+    void ReadDiameterAndAxisLength(Architecture* architecture, int numberOfMonomers, char* initializationProcedure)
     {
         char* diameterDBFilePath;
-        SetDiametersDatabaseFilePath(&diameterDBFilePath, numberOfMonomers);
+        SetDiametersDatabaseFilePath(&diameterDBFilePath, numberOfMonomers, initializationProcedure);
         char* lengthDBFilePath;
         SetAxisLengthDatabaseFilePath(&lengthDBFilePath, numberOfMonomers);
         ReadDiameter(architecture, diameterDBFilePath);
-        if(IsCylinderInfinite())
+        if(IsCylinderInfinite(initializationProcedure))
             ReadAxisLength(architecture, lengthDBFilePath);
         else
             architecture->axisLength = architecture->confinementDiameter * ASPECT_RATIO;
@@ -312,12 +312,12 @@
 
     // Initializes the Architecture struct and reads the diameter database
     // Stores the read diameter in the struct
-    void InitializeArcAndReadDiameter(Architecture* archDiameter, int numberOfMonomers, char* architectureName)
+    void InitializeArcAndReadDiameter(Architecture* archDiameter, int numberOfMonomers, char* architectureName, char* initializationProcedure)
     {
         // Initializing Cross-Links object to read dimaeters:
         InitializeArchitecture(archDiameter, architectureName);
         char* databaseFilePath;
-        SetDiametersDatabaseFilePath(&databaseFilePath, numberOfMonomers);
+        SetDiametersDatabaseFilePath(&databaseFilePath, numberOfMonomers, initializationProcedure);
         ReadDiameter(archDiameter, databaseFilePath);
         free(databaseFilePath);
     }
@@ -335,21 +335,21 @@
 
     // Initializes the Architecture struct and reads the diameter and axis lengths
     // Stores the read diameter and axis length values in the struct
-    void InitializeArcConfinementDimensions(Architecture* archConfinement, int numberOfMonomers, char* architectureName)
+    void InitializeArcConfinementDimensions(Architecture* archConfinement, int numberOfMonomers, char* architectureName, char* initializationProcedure)
     {
         InitializeArchitecture(archConfinement, architectureName);
-        ReadDiameterAndAxisLength(archConfinement, numberOfMonomers);
+        ReadDiameterAndAxisLength(archConfinement, numberOfMonomers, initializationProcedure);
     }
 
     // Initializes and fills the Architecture struct by reading cross links, diameter, and axis length from the databases
-    void InitializeAndReadArc(Architecture* architecture, int numberOfMonomers, char* architectureName)
+    void InitializeAndReadArc(Architecture* architecture, int numberOfMonomers, char* architectureName, char* initializationProcedure)
     {
         InitializeArchitecture(architecture, architectureName);
         char* databaseFilePath;
         SetCrossLinksDatabaseFilePath(&databaseFilePath, numberOfMonomers);
         ReadCrossLinks(architecture, databaseFilePath);
         free(databaseFilePath);
-        SetDiametersDatabaseFilePath(&databaseFilePath, numberOfMonomers);
+        SetDiametersDatabaseFilePath(&databaseFilePath, numberOfMonomers, initializationProcedure);
         ReadDiameter(architecture, databaseFilePath);
         free(databaseFilePath);
         SetAxisLengthDatabaseFilePath(&databaseFilePath, numberOfMonomers);
