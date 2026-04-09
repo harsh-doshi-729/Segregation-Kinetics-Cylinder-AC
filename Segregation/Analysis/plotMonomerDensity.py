@@ -56,7 +56,7 @@ def SetConstants():
         print("The first argument could not be converted to an integer!")
         sys.exit(1)
 
-    diameter = pt.ReadDiameter(numberOfMonomers, architecture)
+    diameter = pt.ReadDiameter(numberOfMonomers, architecture, initializationProcedure)
     boxLength = segParam.ASPECT_RATIO * diameter
 
     if len(sys.argv) > numberOfMandatoryArguments + 1:

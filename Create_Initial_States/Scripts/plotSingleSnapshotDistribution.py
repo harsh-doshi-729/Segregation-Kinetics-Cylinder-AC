@@ -79,7 +79,7 @@ def SetConstants():
     initializationProcedure = sys.argv[4]
 
     # Reading diameter and setting box length:
-    diameter = pt.ReadDiameter(numberOfMonomers, architecture)
+    diameter = pt.ReadDiameter(numberOfMonomers, architecture, initializationProcedure)
     boxLength = segParam.ASPECT_RATIO * diameter
 
     # Optional arguments:
@@ -505,7 +505,7 @@ def PlotCrossSectionalDistribution(lmp_data: data3.data, noOfLongitudinalSlices:
 
     fig, ax = plt.subplots(nrows = segParam.NROWS, ncols = segParam.NCOLS, figsize = (9, 10)) # Almost square figure
     # Reading diameter:
-    diameter = pt.ReadDiameter(numberOfMonomers, architecture)
+    diameter = pt.ReadDiameter(numberOfMonomers, architecture, initializationProcedure)
     radius = diameter / 2
     # Setting axis limits:
     # if segParam.RESCALE_LENGTHS:

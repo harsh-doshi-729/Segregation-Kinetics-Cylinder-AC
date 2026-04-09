@@ -91,9 +91,9 @@ def ExtractSubstringInParenthesis(string: str) -> str:
         substring = substrings[0][1:-1] # shaving off the parenthesis in the first instance
         return substring
     
-def ReadDiameter(numberOfMonomers: int, architecture: str) -> float:
+def ReadDiameter(numberOfMonomers: int, architecture: str, initializationProcedeure: str) -> float:
     """Reads and returns the diameter corresponding to the architecture passed from the diamaters database"""
-    filePath = sysPaths.GetDiameterDatabaseFilePath(numberOfMonomers)
+    filePath = sysPaths.GetDiameterDatabaseFilePath(numberOfMonomers, initializationProcedeure)
     df = pd.read_csv(filePath)
     architectures = df.iloc[:, 0]
     radiiOfGyration = df.iloc[:, 1]

@@ -42,8 +42,12 @@ def GetFolder(baseFolder: str, numberOfMonomers: int, simulation_name: str = "")
     else:
         return f"{baseFolder}b{numberOfMonomers}/{simulation_name}/"
 
-def GetDiameterDatabaseFilePath(numberOfMonomers: int) -> str:
-    return f"{SEGREGATION}b{numberOfMonomers}/Diameters.csv"
+def GetDiameterDatabaseFilePath(numberOfMonomers: int, initializationProcedure: str) -> str:
+    diametersDir = f"{SEGREGATION}b{numberOfMonomers}/"
+    if IsCylinderInfinite(initializationProcedure):
+        return f"{diametersDir}c_Diameters.csv" # Diameters for constant confinement (infinite cylinder)
+    else:
+        return f"{diametersDir}Diameters.csv" # Diameter for constant volume fraction (finite cylinder)
 
 def IsCylinderInfinite(special_simulation: str|None = None) -> bool:
     """Returns whether the passed special_simulation corresponds to the case of an infinite cylinder.

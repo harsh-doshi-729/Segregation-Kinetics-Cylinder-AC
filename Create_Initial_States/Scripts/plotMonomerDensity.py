@@ -69,7 +69,7 @@ def SetArguments():
     numberOfMonomers = int(numberOfMonomers)
     
     # Reading Box Length:
-    diameter = pt.ReadDiameter(numberOfMonomers, architecture)
+    diameter = pt.ReadDiameter(numberOfMonomers, architecture, initializationProcedure)
     boxLength = segParam.ASPECT_RATIO * diameter
 
     # Optional argument:

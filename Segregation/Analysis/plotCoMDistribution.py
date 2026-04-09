@@ -56,7 +56,7 @@ def SetConstants():
     global numberOfSteps
     global dataInterval
 
-    diameter = pt.ReadDiameter(numberOfMonomers, architecture)
+    diameter = pt.ReadDiameter(numberOfMonomers, architecture, initializationProcedure)
     boxLength = pt.GetAxisLength(numberOfMonomers, architecture, initializationProcedure, diameter)
     print(f"Diameter: {diameter}, Box length: {boxLength}")
     if numberOfMonomers == 200:
@@ -703,7 +703,7 @@ def PlotSqDeltaCOMSizeComparison(sizeList: list[int], arcList: list[str], runInd
     colourWheels = [blue_gradient, red_gradient]
     for i in range(len(sizeList)):
         numberOfMonomers = sizeList[i]
-        diameter = pt.ReadDiameter(numberOfMonomers, architecture)
+        diameter = pt.ReadDiameter(numberOfMonomers, architecture, initializationProcedure)
         boxLength = pt.GetAxisLength(numberOfMonomers, architecture, initializationProcedure, diameter)
         segParam.CRITERION_STRING = segCriteria[i % len(segCriteria)] # cycling through the criteria
         ax.set_prop_cycle(color = colourWheels[i % len(colourWheels)])

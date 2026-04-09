@@ -50,7 +50,7 @@ def SetConstants():
     global numberOfSteps
     global dataInterval
 
-    diameter = pt.ReadDiameter(numberOfMonomers, architecture)
+    diameter = pt.ReadDiameter(numberOfMonomers, architecture, initializationProcedure)
     boxLength = segParam.ASPECT_RATIO * diameter
     if numberOfMonomers == 200:
         numberOfSteps = 2 * 10 ** 7 # 5 times relaxation time of a simple ring polymer
