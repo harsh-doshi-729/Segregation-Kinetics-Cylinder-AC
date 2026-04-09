@@ -91,7 +91,12 @@ fi
 
 # Reading the confinement diameter for the current architecture:
 . ${SCRIPTS}bash_functions.sh # 'Importing' the bash functions file
-diametersFile=${SEGREGATION}b${numberOfMonomers}/Diameters.csv # Path to the diameter database file
+diameterFileDir=${SEGREGATION}b${numberOfMonomers}/
+if [[ ${special_simulation} == *"inf"* ]]; then # If the segregation needs to be done in an infinite cylinder
+	diametersFile=${diameterFileDir}c_Diameters.csv # Path to the diameter database file for the infinite cylinder (constant confinement) simulations
+else
+	diametersFile=${diameterFileDir}Diameters.csv # Path to the diameter database file for the finite cylinder simulations
+fi
  # An empty dictionary that will be filled:
 declare -A diameters=()
 read_diameters ${diametersFile} # Calling the function from bash_functions

@@ -25,7 +25,12 @@ fi
 # A dictionary to store axis lengths of the confining cylinder for various architectures:
 declare -A diameters=()
 # CSV File containing diameters and axis lengths of the cylinder for a chosen polymer architectures:
-diametersFile="${SEGREGATION}b${numberOfMonomers}/Diameters.csv"
+diameterFileDir=${SEGREGATION}b${numberOfMonomers}/
+if [[ ${special_simulation} == *"inf"* ]]; then # If the segregation needs to be done in an infinite cylinder
+	diametersFile=${diameterFileDir}c_Diameters.csv # Path to the diameter database file for the infinite cylinder (constant confinement) simulations
+else
+	diametersFile=${diameterFileDir}Diameters.csv # Path to the diameter database file for the finite cylinder simulations
+fi
 
 
 cd ${CREATE_INITIAL_STATES}

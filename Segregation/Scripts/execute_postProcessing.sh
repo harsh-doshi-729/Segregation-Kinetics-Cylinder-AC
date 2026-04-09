@@ -33,7 +33,12 @@ fi
 
 # Reading the confinement diameter for the current architecture:
 . ${SCRIPTS}bash_functions.sh # 'Importing' the bash functions file
-diametersFile=${NEW_SEGREGATION}b${numberOfMonomers}/Diameters.csv # Path to the diameter database file
+diameterFileDir=${SEGREGATION}b${numberOfMonomers}/
+if [[ ${special_simulation} == *"inf"* ]]; then # If the segregation needs to be done in an infinite cylinder
+	diametersFile=${diameterFileDir}c_Diameters.csv # Path to the diameter database file for the infinite cylinder (constant confinement) simulations
+else
+	diametersFile=${diameterFileDir}Diameters.csv # Path to the diameter database file for the finite cylinder simulations
+fi
 # An empty dictionary that will be filled:
 declare -A diameters=() 
 read_diameters ${diametersFile} # Calling the function from bash_functions
@@ -51,7 +56,7 @@ fi
 if [[ ${special_simulation} == *"inf"* ]]; then # If the segregation needs to be done in an infinite cylinder
 	axisLength="" # Empty string since the axis length is not defined for an infinite cylinder
 else
-axisLength=$(bc <<< "scale=2; 10 * ${radius}")
+	axisLength=$(bc <<< "scale=2; 10 * ${radius}")
 fi
 
 
@@ -69,5 +74,5 @@ i=${runIndex}
 # for((i=1; i<=${numberOfRuns}; i++)) # Can be done for multiple runs simultaneously
 # do
 nohup bash postProcessing.sh ${numberOfMonomers} ${architecture} $i ${special_simulation} Segregation ${axisLength} > ../${folderPrefix}${architecture}/run$i/post_nohup.out &
-	sleep 1
+sleep 1
 # done
