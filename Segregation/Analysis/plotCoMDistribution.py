@@ -178,7 +178,9 @@ def PlotCoMDistanceAndSave(timeSteps, z_com_list, segTime: int | None = None, sh
         plt.show(block = True)
     folder = GetFolder(numberOfMonomers, architecture)
     # fig.savefig(f"{folder}CoM_Distance_{architecture}_{numberOfMonomers}.png")
-    fig.savefig(f"{folder}Analysis/CoM_Distance/CoM_Distance_r{runIndex}.png")
+    saveFolder = f"{folder}Analysis/CoM_Distance/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the CoM_Distance folder if it does not exist already
+    fig.savefig(f"{saveFolder}CoM_Distance_r{runIndex}.png")
 
 def PlotDistribution(z_com, ax, indexOfPolymer: int):
     # plotting:
@@ -378,10 +380,12 @@ def PlotData(timeSteps, z_com_list, firstPassageTime, segTime, showPlot: bool = 
         plotLabel = "semilog_"
     else:
         plotLabel = ""
+    saveFolder = f"{folder}Analysis/TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
     if segParam.SPLIT_COM_DISTANCE:
-        fig2.savefig(f"{folder}Analysis/TimeSeries/{plotLabel}Polymer_CoM_r{runIndex}{segParam.FIG_EXT}")
+        fig2.savefig(f"{saveFolder}{plotLabel}Polymer_CoM_r{runIndex}{segParam.FIG_EXT}")
     else:
-        fig2.savefig(f"{folder}Analysis/TimeSeries/{plotLabel}CoMDistance_r{runIndex}{segParam.FIG_EXT}")
+        fig2.savefig(f"{saveFolder}{plotLabel}CoMDistance_r{runIndex}{segParam.FIG_EXT}")
     
     #closing figures to save memory:
     # plt.close(fig1)
@@ -627,7 +631,9 @@ def PlotSqDeltaCOMDisplacement(runIndex: int = -1, showPlot: bool = False) -> No
         saveRunLabel = 'all'
     else:
         saveRunLabel = f"r{runIndex}"
-    fig.savefig(f"{folder}Analysis/TimeSeries/CoM_Sq_{segParam.COM_MODE}_{saveRunLabel}{segParam.FIG_EXT}")
+    saveFolder = f"{folder}Analysis/TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}CoM_Sq_{segParam.COM_MODE}_{saveRunLabel}{segParam.FIG_EXT}")
     # Success message:
     print(f"Successfully plotted squared delta CoM {segParam.COM_MODE} for {runIndexLabel} of {architecture}")
 
@@ -675,8 +681,9 @@ def PlotSqDeltaCOMArcComparison(arcList: list[str], showPlot: bool = False, runI
         # Setting axis limit
         # if sysPaths.IsCylinderInfinite() and segParam.USE_LOGLOG_PLOT:
         #     ax.set_ylim(bottom = 0.1)
-            
-    fig.savefig(f"{folder}Analysis/TimeSeries/CoM_Sq_{segParam.COM_MODE}_{saveArcLabel}_{saveRunLabel}{segParam.FIG_EXT}")
+    saveFolder = f"{folder}Analysis/TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}CoM_Sq_{segParam.COM_MODE}_{saveArcLabel}_{saveRunLabel}{segParam.FIG_EXT}")
     plt.close(fig)
     print(f"Successfully plotted squared delta CoM {segParam.COM_MODE} for multiple architectures: {arcList}")
 
@@ -735,7 +742,9 @@ def PlotSqDeltaCOMSizeComparison(sizeList: list[int], arcList: list[str], runInd
         saveSizeLabel = f"{saveSizeLabel}_normTime"
 
     # Saving figure:
-    fig.savefig(f"{folder}Analysis/TimeSeries/CoM_Sq_{segParam.COM_MODE}_{saveSizeLabel}_{saveRunLabel}{segParam.FIG_EXT}")
+    saveFolder = f"{folder}Analysis/TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}CoM_Sq_{segParam.COM_MODE}_{saveSizeLabel}_{saveRunLabel}{segParam.FIG_EXT}")
     plt.close(fig)
     print(f"Successfully plotted squared delta CoM {segParam.COM_MODE} for multiple architectures: {arcList} and multiple size: {sizeList}")
 
@@ -770,7 +779,9 @@ def PlotSquaredCOMRunComparison(runIndices: list[int], showPlot: bool = False, g
 
     # Saving figure:
     folder = GetFolder(numberOfMonomers, architecture)
-    fig.savefig(f"{folder}Analysis/TimeSeries/CoM_Sq_{segParam.COM_MODE}_{saveRunLabel}{segParam.FIG_EXT}")
+    saveFolder = f"{folder}Analysis/TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}CoM_Sq_{segParam.COM_MODE}_{saveRunLabel}{segParam.FIG_EXT}")
     # Success message:
     print(f"Successfully plotted squared delta CoM {segParam.COM_MODE} for {runIndices} of {architecture}")
 
@@ -821,7 +832,9 @@ def PlotSqDeltaCOMGroupsComparison(showPlot: bool = False) -> None:
 
     if showPlot:
         plt.show()
-    fig.savefig(f"{folder}Analysis/TimeSeries/CoM_Sq_{segParam.COM_MODE}_groups{segParam.FIG_EXT}")
+    saveFolder = f"{folder}Analysis/TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}CoM_Sq_{segParam.COM_MODE}_groups{segParam.FIG_EXT}")
     plt.close(fig)
     print(f"Successfully plotted squared delta CoM {segParam.COM_MODE} for multiple groups of runs: {segParam.GROUP_INDICES}")
 
@@ -926,8 +939,9 @@ def PlotSqCOMStdDev(normalize: bool = False, showPlot: bool = False) -> None:
         modifierLabel += "norm_"
     if segParam.SKIP_OUTLIER_RUNS:
         modifierLabel += "skip_"
-    
-    fig.savefig(f"{folder}Analysis/TimeSeries/CoM_Sq_{segParam.COM_MODE}_{modifierLabel}stdDev{segParam.FIG_EXT}")
+    saveFolder = f"{folder}Analysis/TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}CoM_Sq_{segParam.COM_MODE}_{modifierLabel}stdDev{segParam.FIG_EXT}")
     # Success message:
     print(f"Successfully plotted {modifierLabel}standard deviation of squared delta CoM {segParam.COM_MODE} for mean over all runs of {architecture}")
 
@@ -1046,7 +1060,9 @@ def PlotSqCOMStdDevArcComparison(arcList: list[str], normalize: bool = False, sh
         modifierLabel += "norm_"
     if segParam.SKIP_OUTLIER_RUNS:
         modifierLabel += "skip_"
-    fig.savefig(f"{folder}Analysis/TimeSeries/CoM_Sq_{segParam.COM_MODE}_{modifierLabel}stdDev_arcComp{segParam.FIG_EXT}")
+    saveFolder = f"{folder}Analysis/TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}CoM_Sq_{segParam.COM_MODE}_{modifierLabel}stdDev_arcComp{segParam.FIG_EXT}")
     plt.close(fig)
     print(f"Successfully plotted {modifierLabel}standard deviation of squared delta CoM {segParam.COM_MODE} for multiple architectures: {arcList}")
 
@@ -1116,6 +1132,7 @@ def PlotSqCOMStdDevInitComparison(initList: list[str], arcList: list[str], norma
         modifierLabel += "norm_"
     if segParam.SKIP_OUTLIER_RUNS:
         modifierLabel += "skip_"
+    Path(f"{saveFolder}Analysis/TimeSeries/").mkdir(parents=True, exist_ok=True) # creating the TimeSeries folder if it does not exist already
     fig.savefig(f"{saveFolder}Analysis/TimeSeries/CoM_Sq_{segParam.COM_MODE}_{modifierLabel}stdDev_initComp.png")
     plt.close(fig)
     print(f"Successfully plotted {modifierLabel}standard deviation of squared delta CoM {segParam.COM_MODE} for multiple architectures: {arcList} and initializations: {initList}")
@@ -1293,7 +1310,9 @@ def ReadAndPlotRegionData(showPlot: bool = False) -> None:
         plotLabel = "semilog_"
     else:
         plotLabel = ""
-    fig.savefig(f"{folder}Analysis/Region_CoM_TimeSeries/{plotLabel}regCoM_r{runIndex}{segParam.FIG_EXT}")
+    saveFolder = f"{folder}Analysis/Region_CoM_TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the Region_CoM_TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}{plotLabel}regCoM_r{runIndex}{segParam.FIG_EXT}")
     plt.close(fig)
     print(f"Successfully plotted region wise CoM Time Series for {architecture} Run {runIndex}")
 
@@ -1340,7 +1359,9 @@ def PlotRegionPairDistance(regionPairList: list[tuple], showPlot: bool = False) 
     if showPlot:
         plt.show(block = True)
     # Saving the figure
-    fig.savefig(f"{folder}Analysis/Region_CoM_TimeSeries/regDeltaCoM_r{runIndex}.png")
+    saveFolder = f"{folder}Analysis/Region_CoM_TimeSeries/"
+    Path(saveFolder).mkdir(parents=True, exist_ok=True) # creating the Region_CoM_TimeSeries folder if it does not exist already
+    fig.savefig(f"{saveFolder}regDeltaCoM_r{runIndex}.png")
     plt.close(fig)
     print(f"Successfully plotted region wise CoM Time Series for {architecture} Run {runIndex}")
     
