@@ -7,12 +7,12 @@ import sys
 from typing import List, Tuple
 import numpy.typing as npt
 # importing the scripts that contains all the local paths
-# The path to the directory containing this module is set as the environment variable PYTHONPATH
+sys.path.append(f"../../Global_Scripts/System_File_Paths/")
 import system_file_paths as sysPaths 
 import Segregation_Parameters as segParam
 
 # importing PlottingTools:
-# The path to the directory containing this module is set as the environment variable PYTHONPATH
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/")
 import PlottingTools as pt
 
 # polymer info:
@@ -22,11 +22,12 @@ numberOfMonomers = 200
 
 # plotting info:
 plottingStyles = {"distribution": False, "scatter": False, "both": False} # dictionary with string-boolean key value pairs; a list of flags
-plottingStyle = "both" # default style
+plottingStyle = "scatter" # default style
 
 # file info:
 numberOfRuns = 50 # Number of runs that showed successful segregation
-directory = sysPaths.NEW_SEGREGATION
+directory = sysPaths.SEGREGATION
+initializationProcedure = ""
 
 def VerifyPlottingStyle(plottingStyle: str) -> None:
     """Verifies whether the plotting style passed is a valid option that exists in the plotting styles list.
@@ -41,17 +42,19 @@ def SetConstants():
     global architecture
     global numberOfMonomers
     global plottingStyle
+    global initializationProcedure
 
     numberOfMandatoryArguments = 3
     if len(sys.argv) < numberOfMandatoryArguments:
-        print("Not enough arguments specified while invoking the script! Please pass the name of the architecture and number of monomers in the following format:")
-        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture>")
+        print("Not enough arguments specified while invoking the script! Please pass the number of monomers, the architecture, and the initialization procedure in the following format:")
+        print("python /<path>/plotCoMDistribution.py <noOfMonomers> <architecture> <initializationProcedure>")
         print("The keyword 'all' can be entered instead of an architecture to plot a comparison plot for multiple architectures")
-        print(f"Optionally, a third argument can be passed for the plotting style. Available options: {plottingStyles.keys()}")
+        print(f"Optionally, a fourth argument can be passed for the plotting style. Available options: {plottingStyles.keys()}")
         quit() # terminating the script
     
     architecture = sys.argv[2]
     numberOfMonomers = sys.argv[1]
+    initializationProcedure = sys.argv[3]
     # checking if the number of monomers is valid:
     if not numberOfMonomers.isdigit():
         print(f"The entered numberOfMonomers {numberOfMonomers} cannot be converted to a number! Please provide a valid number")
@@ -59,8 +62,8 @@ def SetConstants():
 
     numberOfMonomers = int(numberOfMonomers)
 
-    if len(sys.argv) == numberOfMandatoryArguments + 1: # optional argument passed
-        plottingStyle = sys.argv[3]
+    if len(sys.argv) == numberOfMandatoryArguments + 2: # optional argument passed
+        plottingStyle = sys.argv[numberOfMandatoryArguments + 1]
         VerifyPlottingStyle(plottingStyle)
     SetPlottingStyleFlagValues(plottingStyle)
 
@@ -180,7 +183,7 @@ def ReadAndPlotSegTimes(folder: str, plottingStyle: str, showPlot: bool = False)
     """Reads the segregation times file and plots the data"""
 
     # Setting the plotting style:
-    mpl.style.use(f'{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/bold.mplstyle')
+    mpl.style.use(f'{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/bold.mplstyle')
 
     times, segregation_criterion = ReadSegTimes(folder)
     times = RescaleTimesDict(times, segParam.TAU_0)
@@ -206,7 +209,7 @@ def ReadAndPlotSegTimes(folder: str, plottingStyle: str, showPlot: bool = False)
 
 def ReadAndPlotSegTimesWithBoxPlot(folder: str, plottingStyle: str, showPlot: bool = False) -> None:
     """Plots the segregation times distribution and the box plot side by side for an architecture"""
-    mpl.style.use(f'{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_big_bold.mplstyle')
+    mpl.style.use(f'{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_big_bold.mplstyle')
 
     times, segregation_criterion = ReadSegTimes(folder)
     times = RescaleTimesDict(times, segParam.TAU_0)
@@ -252,7 +255,7 @@ def GetAxis(axes, nrows: int, ncols: int, i: int, j: int) -> mpl.axes._axes.Axes
 def ReadAndPlotGroupedSegTimes(folder: str, plottingStyle: str, showPlot: bool = False) -> None:
     """Reads the segregation times from the folder and plots them in multiple groups, as defined in the segParam file"""
     # Setting the plotting style:
-    mpl.style.use(f'{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_big_bold.mplstyle')
+    mpl.style.use(f'{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_big_bold.mplstyle')
 
     # Reading times:
     rawTimes, segregation_criteria = ReadSegTimes(folder)
@@ -312,8 +315,8 @@ def ReadAndPlotGroupedSegTimes(folder: str, plottingStyle: str, showPlot: bool =
         fig.supxlabel(rf"Segregation Time ({axisLabel}$\tau_0$)")
         fig.supylabel("Frequency")
     
-    # if showPlot:
-    #     plt.show(block = True)
+    if showPlot:
+        plt.show(block = True)
 
     # Saving figure:
     fig.savefig(f"{folder}segTimeComparison{segParam.FIG_EXT}")
@@ -343,7 +346,7 @@ def PlotCollageWithStyle(architectures: list[str], folder: str, plottingStyle: s
     """Plots the segregation times for all the different architectures passed as a collage"""
 
     # Setting the plotting style:
-    mpl.style.use(f'{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_bold.mplstyle')
+    mpl.style.use(f'{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_bold.mplstyle')
     
     fig, axes = plt.subplots(ncols = ncols, nrows = nrows, sharey = True, sharex = True)
 
@@ -406,7 +409,7 @@ def PlotCollageWithStyle(architectures: list[str], folder: str, plottingStyle: s
     
     if showPlot:
         plt.show(block = True)
-    fig.savefig(f"{sysPaths.GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)}Segregation_Times_subset.png")
+    fig.savefig(f"{sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)}Segregation_Times_subset.png")
     # fig.savefig(f"{sysPaths.POLYMER_PHYSICS}/LAMMPS_runs/cluster-data/new_segregation/Analysis/Segregation_Times_subset.png")
 
 # TODO: Use architecture aliases
@@ -416,8 +419,8 @@ if __name__ == "__main__":
     if architecture != 'all':
         # Plotting:
         folder = GetFolder(architecture)
-        # ReadAndPlotSegTimes(folder, plottingStyle)
-        ReadAndPlotGroupedSegTimes(folder, plottingStyle, True)
+        ReadAndPlotSegTimes(folder, plottingStyle, True)
+        # ReadAndPlotGroupedSegTimes(folder, plottingStyle, True)
         # ReadAndPlotSegTimesWithBoxPlot(folder, plottingStyle, True)
     else:
         # Plotting collage
