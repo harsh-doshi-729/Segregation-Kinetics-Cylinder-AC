@@ -172,9 +172,13 @@ processors * * *
 
 ####################################################################################################
 # Variables:
+variable initialRadius equal ceil(${numberOfMonomers}/2/PI)+5 # since 2 * PI * R = no Of Monomers * 1 (eq bond distance); +5 for buffer distance from the box wall
+if "${numberOfMonomers} == 200" then &
+    "variable initialAxisLength equal 500" &
+else &
+    "variable initialAxisLength equal 1000"
+variable initialDiameter equal 2*${initialRadius}
 variable deformInterval equal 2000 # The interval of iterations at which the box is deformed; in discrete steps
-
-# variable intermediateAxisLength equal 98.136 # This is where I am losing the atoms; 98.936-0.8
 
 # The variable finalRadius is accepted from the command line
 print "Final confinement radius: ${finalRadius}"
