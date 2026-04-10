@@ -224,11 +224,7 @@ variable firstMonomerSecondRing equal ${numberOfMonomers}+1
 # variables to set the dimensions:
 # Accepting "radius" from the command line
 variable diameter equal 2*${radius}
-# variable axisLength equal 10*${radius}
-if "${numberOfMonomers} == 200" then &
-    "variable axisLength equal 500" &
-else &
-    "variable axisLength equal 1000"
+variable axisLength equal 10*${radius}
 variable wall equal ${sigma}/2
 variable halfAxisLength equal ${axisLength}/2
 ###################################################################################################

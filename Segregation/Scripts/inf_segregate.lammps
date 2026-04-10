@@ -265,8 +265,10 @@ region cylinder cylinder z 0 0 ${radius} -${halfAxisLength} ${halfAxisLength} si
 
 atom_style angle          # atoms with bonds, and angles
 
+# creating the simulation box in shape of the region: 1 atomype, 1 bond type, 2 bonds per atoms
+create_box 3 cylinder bond/types 3 extra/bond/per/atom 4
 # reading simulation box details from previosly written data file:
-read_data initial_configuration.txt group all
+read_data initial_configuration.txt group all add append
 # assigning mass to the atoms:
 mass * 1
 ###################################################################################################
