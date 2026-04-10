@@ -1,0 +1,81 @@
+# This is the file where the cross links of all the different architectures are stored
+# Each architecture entry starts with the line with the name of the architecture and the number of cross links 'n'  in it separated by a space
+# This line is followed by n lines for each cross link
+# The order in which the atom IDs of the cross links matters. The left atomID is taken as the "lower" limit and the right one as the "upper" limit.
+# It is possible for the lower limit to be greater in value than the upper limit. This implies the case where the cross link spans the region with the oriC discontinuity in atom index. 
+# For example, in the case of Arc-1-5, the central small loop is created by cross-linking monomers 191 and 10. The order makes it so that the number of monomers in this regions is taken to be 20 instead of 191-10=181.
+
+# Linear architecture:
+Arc_Lin 0
+
+# Linear architectures with a cluster of loops in the middle of each linear polymer:
+Arc_Lin_Loop_1 1
+51 150
+
+Arc_Lin_Loop_2 2
+51 100
+101 150
+
+Arc_Lin_Loop_5 5
+51 70
+71 90
+91 110
+111 130
+131 150
+
+Arc_Lin_Loop_10 10
+51 60
+61 70
+71 80
+81 90
+91 100
+101 110
+111 120
+121 130
+131 140
+141 150
+
+# Ring architecture:
+Arc-0 0 
+
+# Arc-1-1_1-19: One small loop (10 monomers) and one large loop (190 monomers) joined together. The sizes of the loops are in the ratio 1:19.
+Arc-1-1_1-19 1
+196 5
+
+# Arc-1-1_1-9: One small loop (20 monomers) and one large loop (180 monomers) joined together The sizes of the loops are in the ratio 1:9.
+Arc-1-1_1-9 1
+191 10
+
+# Arc-1-1_3-7: One small loop (60 monomers) and one large loop (140 monomers) joined together The sizes of the loops are in the ratio 3:7.
+Arc-1-1_3-7 1
+170 30
+
+# Arc-1-1_1-1: Two equal sized loops joined together
+Arc-1-1_1-1 1
+151 50
+
+# Arc-1-2: two quarter contour sized loops at the front of a large loop
+Arc-1-2 2
+1 50
+151 200
+
+# Arc-1-5: 5 smaller consecutive loops each of size 20, symmetrically placed about the monomer indexed 1.
+Arc-1-5 5
+151 170
+171 190
+191 10
+11 30
+31 50
+
+# Arc-1-10: 10 smaller consecutive loops on one side of the ring;
+Arc-1-10 10
+1 10
+11 20
+21 30
+31 40
+41 50
+191 200
+181 190
+171 180
+161 170
+151 160
