@@ -371,11 +371,11 @@ variable max_distance equal 1.5*${sigma}
 bond_coeff   1   fene	30.0   ${max_distance} 1 ${sigma} # chain connectivity
 
 # bond_coeff   2	harmonic   50.0    1 # For the inter polymer bonds; low strength bond
-# For style table, specify: # To include the WCA + harmonic bonds for interpolymer bonds
+# For style table, specify: # To include the WCA + harmonic bonds for interpolymer bonds (custom table)
 #   * bond type
 #   * file name
 #   * section keyword (present in the file)
-bond_coeff   2  table      ../../harmWCA.table WCA_HARM_SIG1
+bond_coeff   2  table      ../../../../Scripts/harmWCA.table WCA_HARM_SIG1
 
 # For style harmonic, specify: # For the interpolymer bonds and fixed atoms
 #   * bond type

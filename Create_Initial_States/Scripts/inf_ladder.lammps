@@ -341,7 +341,7 @@ bond_coeff   1   fene   30.0   ${max_distance} 1 ${sigma} # chain connectivity
 #   * bond type
 #   * file name
 #   * section keyword (present in the file)
-bond_coeff   2  table      ../../harmWCA.table REPLICATION
+bond_coeff   2  table      ../../../../Scripts/harmWCA.table REPLICATION
 ###################################################################################################
 
 

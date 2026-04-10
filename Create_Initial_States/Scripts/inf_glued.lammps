@@ -381,7 +381,7 @@ bond_coeff   1   fene   30.0   ${max_distance} 1 ${sigma} # chain connectivity
 #   * bond type
 #   * file name
 #   * section keyword (present in the file)
-bond_coeff   2  table      ../../harmWCA.table WCA_HARM_SIG1
+bond_coeff   2  table      ../../../../Scripts/harmWCA.table WCA_HARM_SIG1
 
 # For style harmonic, specify: # For the interpolymer bonds and fixed atoms
 #   * bond type
