@@ -11,11 +11,11 @@ ASPECT_RATIO = 5 # Ratio of cylinder length to diameter
 
 # Parameters for segregation time criterion:
 # fraction of the box length:
-FIRST_THRESHOLD = 0.45
-SECOND_THRESHOLD = 0.40
+FIRST_THRESHOLD = 0.48
+SECOND_THRESHOLD = 0.43
 THIRD_THRESHOLD = 0 # ignoring remixing effects
 INTERVAL_LENGTH = 0.50 # The fraction of the total run over which the average of CoM distance should be calculated to compare to second threshold
-CRITERION_STRING = "f045_s040_t00" # this must match the above threshold values and interval length;
+CRITERION_STRING = "f048_s043_t00" # this must match the above threshold values and interval length;
 # If L = 0.5; then omit the '_Lxx' from the string
 
 # Parameters for segregation in an infinite cylinder:
@@ -95,7 +95,7 @@ SIZE_LIST = [200, 500] # Size is in terms of integral number of monomers
 PLOT_INIT_COMPARISON = False # A flag to indicate whether to plot the comparison for different initial conditions
 SPECIAL_SIMULATIONS = ["fene_recenter"]
 # AOI_COMPARE = ["Arc0", "ArcI-8", "Arc2", "Arc_Loop_5", "Arc1_10"] # An arc list for each special simulation
-PLOT_COMPARISON = True # A flag to indicate whether to plot the comparison for different architectures/runs
+PLOT_COMPARISON = False # A flag to indicate whether to plot the comparison for different architectures/runs
 AOI_COMPARE = ["Arc-0", "Arc-1-1_1-1", "Arc-1-2", "Arc-1-5", "Arc-1-10"] # ["Arc1_10", "Arc_Loop_5", "Arc2", "ArcI-8", "Arc0"]
 # Custom folder paths for any comparison scripts: as a dictionary of <identifier>-<custom path> key-value pair
 COMPARE_CUSTOM_PATHS = {"Arc-1-5": "/home/harsh/ComputationalPhysics/Polymer_Physics/LAMMPS_runs/cluster-data/new_segregation/b200/Previous_Attempts/inf_recenter/Arc_Loop_5/run7/",
@@ -165,7 +165,7 @@ def GetCustomLabels(architectures: list[str]) -> str:
 INCLUDE_FLIERS_INFORMATION = True
 
 # Plot inset of segregation trajectory comparisons:
-PLOT_INSET = True
+PLOT_INSET = False
 INSET_POSITION = [0.4, 0.1, 0.5, 0.5] # [x0, y0, width, height]
 
 # Plot only Trajectory comparison using AOI_COMPARE:
@@ -173,7 +173,7 @@ ONLY_TRAJECTORY_COMPARISON = False
 
 # Whether to use loglog plots for MSD:
 USE_LOGLOG_PLOT = False # Takes precedence over semilog plot
-USE_SEMILOG_PLOT = True
+USE_SEMILOG_PLOT = False
 
 # Whether all the individual runs should be plotted in the background as light grey lines (while calculating the mean squared CoM displacement):
 PLOT_ALL_RUNS = False
@@ -230,16 +230,16 @@ else:
 RESCALE_RADIUS = True # Rescale radial coordinates by the cylinder radius
 
 # File extension for saving figures and plots:
-FIG_EXT = ".eps" # ".eps" or ".png"
-SHOW_TITLE = False # The title might not be relevant for including plots in a paper or poster
+FIG_EXT = ".png" # ".eps" or ".png"
+SHOW_TITLE = True # The title might not be relevant for including plots in a paper or poster
 USE_MARGINS = False
 # PLOT_MARGINS = {'left': 0.14, 'bottom': 0.14, 'right': 0.96, 'top': 0.96} # What for?
 # PLOT_MARGINS = {'left': 0.03, 'bottom': 0.14, 'right': 0.96, 'top': 0.96} # For monomer density
 PLOT_MARGINS = {'left': 0.14, 'bottom': 0.17, 'right': 0.96, 'top': 0.96} # For semilog squared COM distance time series
 
 # Custom commands for writing an SFTP script; currently for backing up New_Segregation zip files
-# SFTP_S_BASE_FOLDER = clusPaths.DESKTOP_NEW_SEGREGATION
-# SFTP_LOCAL_BASE_FOLDER = sysPaths.BACKUP_NEW_SEGREGATION
+# SFTP_S_BASE_FOLDER = clusPaths.DESKTOP_SEGREGATION
+# SFTP_LOCAL_BASE_FOLDER = sysPaths.BACKUP_SEGREGATION
 SFTP_S_BASE_FOLDER = "/home/soft-matter-group/Desktop/Harsh/Polymer_Physics/LAMMPS_runs/cluster-data/new_segregation/"
 SFTP_LOCAL_BASE_FOLDER = "/home/harsh/ComputationalPhysics/Polymer_Physics/LAMMPS_runs/cluster-data/new_segregation/"
 def Get_SFTP_Commands(runIndex: int) -> str:
@@ -271,7 +271,7 @@ def ReadSegregationTimes(numberOfMonomers: int, architecture: str, criterion: st
         - runIndices: A list of run indices for which the segregation times are recorded
         - segregationTimes: A list of segregation times corresponding to the run indices
     """
-    path = f"{sysPaths.GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)}{architecture}/Analysis/segregationTimes_{criterion}.csv"
+    path = f"{sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, sysPaths.SPECIAL_SIMULATION)}{architecture}/Analysis/segregationTimes_{criterion}.csv"
     try:
         df = pd.read_csv(path)
         runIndices = df.iloc[: ,0].tolist()
