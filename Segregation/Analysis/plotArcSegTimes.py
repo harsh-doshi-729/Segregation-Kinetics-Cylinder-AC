@@ -7,14 +7,14 @@ from pathlib import Path
 import sys
 
 # importing the scripts that contains all the local paths
-# The path to the directory containing this module is set as the environment variable PYTHONPATH
+sys.path.append(f"../../Global_Scripts/System_File_Paths/")
 import system_file_paths as sysPaths 
 import Segregation_Parameters as segParam
+sys.path.append(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/")
 import PlottingTools as pt
 
 # modules I have written:
 sys.path.append(f"{sysPaths.CREATE_INITIAL_STATES}Scripts/")
-import plotAverageCoMDistance
 import plotSegTimeDistribution
 
 # Global variables
@@ -25,7 +25,7 @@ showFliersInformation = True # A flag to indicate whether the box plots should h
 
 def GetAcceptedSpecialSimulationNames(numberOfMonomers: int) -> list[str]:
     """Returns a list of accepted special simulation names that can be used to make the plot"""
-    filePath = f"{sysPaths.NEW_SEGREGATION}b{numberOfMonomers}/Previous_Attempts/" # The path to the Previous_Attempts folder 
+    filePath = f"{sysPaths.SEGREGATION}b{numberOfMonomers}/" # The path to the Previous_Attempts folder 
     # which stores all the special simulation folders
     previousAttemptsPath = Path(filePath)
 
@@ -97,61 +97,6 @@ def GetSegTimeDistribution(folder: str, architecture: str) -> tuple[list[int], s
     timesDict, segregation_criterion = plotSegTimeDistribution.ReadSegTimes(folderPath)
     segTimes = list(timesDict.values())
     return segTimes, segregation_criterion
-
-def PlotMeans(architectures, folder: str, normalize: bool):
-    """Plots the means of the segregation times of different architectures passed in the list and saves the image at the location of the folder.
-    normalize: if True, the segregation time means are 'normalized' by the average distance the CoMs must move further to be called segregated.
-    This normalization is done with a quantity that signifies how easy it is for two polymers to segregate from a given mixed state separation."""
-
-    if normalize:
-        plotAverageCoMDistance.SetConstants() # initializing the variables in this module
-        distancesToSegregate = []
-    means = []
-    stds = []
-    segregation_criterion = "" # The criterion with which all segregations were supposedly carried out
-    for arc in architectures:
-        segTimes, criterion = GetSegTimeDistribution(folder, arc)
-        if len(segregation_criterion) == 0: # not initialized
-            segregation_criterion = criterion # initializing with criterion of first architecture
-        else:
-            if segregation_criterion != criterion: # comparing criteria of different architectures
-                print(f"ERROR: All the segregation criteria for the architecures are not the same! {segregation_criterion} and {criterion} for {arc} cannot be compared.")
-                sys.exit(1)
-        dist = np.array(segTimes)
-        mean = np.mean(dist)
-        std = np.std(dist)
-
-        if normalize:
-            distanceToSegregate = plotAverageCoMDistance.GetDistanceToSegregation(arc) # this parameter is lower for mixed state that have a higher average CoM distance
-            distancesToSegregate.append(distanceToSegregate)
-            mean = mean / distanceToSegregate
-            std = std / distanceToSegregate
-
-        means.append(mean)
-        stds.append(std)
-
-    fig, ax = plt.subplots(figsize = (8, 6))
-    ax.errorbar(architectures, means, yerr = stds, ecolor = 'black', capsize = 10, fmt = 'o')
-    print(f"Means: {means}")
-    if normalize:
-        print(f"Normalization factors: {distancesToSegregate}")
-    ax.set_xlabel("Architectures")
-    ax.set_ylim(ymin = 0)
-    plt.xticks(rotation = 45)
-    # ax.set_xticks(ax.get_xticks)
-    # ax.set_xticklabels(ax.get_xticklabels, rotation = 45)
-    if normalize:
-        ax.set_ylabel("Normalized Mean Segregation Time (steps)")
-        ax.set_title("Normalized Mean Segregation Times for two polymers (200 monomers each) \n of different polymer architectures")
-    else:
-        ax.set_ylabel("Mean Segregation Time (steps)")
-        ax.set_title("Mean Segregation Times for two polymers (200 monomers each) \n of different polymer architectures")
-
-    plt.show(block = True)
-    if normalize:
-        fig.savefig(f"{folder}Analysis/NormalizedSegregationTimesMeans.png")
-    else:
-        fig.savefig(f"{folder}Analysis/SegregationTimesMeans.png")
 
 def AddFliersText(boxDict: dict, ax: mpl.axes.Axes) -> float:
     """Accepts the box plot dictionary returned while plotting and adds annotations to each box plot stating the number of fliers/outliers.
@@ -266,7 +211,7 @@ def PlotBoxPlots(folder: str, architectures: list[str], ax: mpl.axis.Axis, conve
 def PlotAndSaveBoxPlots(folder: str, architectures: list[str], showPlot: bool = False) -> None:
     """Plots the distributions of segregation times of all architectures passes as box plots in a single plot and saves the figure.
     The folder passed should be the location where all the architecture folders are present"""
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/big_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/big_bold.mplstyle")
     fig, ax = plt.subplots()
     boxDict, segregation_criterion = PlotBoxPlots(folder, architectures, ax, showFliersInformation = segParam.INCLUDE_FLIERS_INFORMATION)
 
@@ -308,7 +253,7 @@ def PlotBoxPlotComparison(special_simulations: list[str], architectures: list, s
         for special_simulation in special_simulations:
             arcDatabase.append(architectures)
     
-    mpl.style.use(f"{sysPaths.POLYMER_PHYSICS}Scripts/Plotting_Styles/subplots_bold.mplstyle")
+    mpl.style.use(f"{sysPaths.GLOBAL_SCRIPTS}Plotting_Styles/subplots_bold.mplstyle")
     nrows = segParam.NROWS
     ncols = segParam.NCOLS
     fig, axes = plt.subplots(sharey = True, nrows = nrows, ncols = ncols)
@@ -316,7 +261,7 @@ def PlotBoxPlotComparison(special_simulations: list[str], architectures: list, s
     maxFlierCoord = 0 # To store the maximum annotated flier coord over all simulations
     hasFirstAxisBeenSet = False
     for n in range(len(special_simulations)): # Iterating over all special simulations
-        folder = sysPaths.GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, special_simulations[n])
+        folder = sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, special_simulations[n])
         i = n % nrows # row index
         j = n // nrows # column index
         if nrows == 1:
@@ -350,7 +295,7 @@ def PlotBoxPlotComparison(special_simulations: list[str], architectures: list, s
 # script:
 if __name__ == "__main__":
     SetConstants()
-    directory = sysPaths.GetFolder(sysPaths.NEW_SEGREGATION, numberOfMonomers, special_simulation)
+    directory = sysPaths.GetFolder(sysPaths.SEGREGATION, numberOfMonomers, special_simulation)
     # architectures = GetArchitectureList(directory)
     architectures = segParam.AOI_LIST
     if segParam.SORT_ARCHITECTURES:
