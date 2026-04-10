@@ -98,7 +98,7 @@ echo "Seed = ${seed}"
 
 # Running the shrink-relax simulation:
 # LAMMPS_EXEC=`which lmp` # Replace the name of the LAMMPS executable for your installation if lmp is not found
-LAMMPS_EXEC=/usr/bin/lmp
+LAMMPS_EXEC=`which lmp`
 if [ -z ${LAMMPS_EXEC} ]; then
 	echo "LAMMPS executable not found in PATH! Please ensure LAMMPS is installed and the executable is in the PATH, or update the LAMMPS_EXEC variable in this script to point to the executable."
 	exit 1

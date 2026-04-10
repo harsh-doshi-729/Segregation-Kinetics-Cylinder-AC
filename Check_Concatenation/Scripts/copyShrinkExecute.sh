@@ -61,7 +61,7 @@ fi
 # Running the segregation simulation scripts:
 cd ${CHECK_CONCATENATION}b${numberOfMonomers}/${procedure}/${architecture}/run${runIndex}/
 # LAMMPS_EXEC=`which lmp` # Assuming lmp is the LAMMPS executable; change if it is different
-LAMMPS_EXEC=/usr/bin/lmp
+LAMMPS_EXEC=`which lmp`
 if [ -z ${LAMMPS_EXEC} ]; then
 	echo "LAMMPS executable lmp not found. Please check if the executable lmp is in your PATH, or if the executable is named differently."
 	exit 1
