@@ -1,0 +1,3 @@
+Arc-1-2 Run 1: Polymers Unconcatenated at iteration 800000
+Arc-1-2 Run 1 Polymer 1: All internal regions unconcatenated!
+Arc-1-2 Run 1 Polymer 2: All internal regions unconcatenated!
