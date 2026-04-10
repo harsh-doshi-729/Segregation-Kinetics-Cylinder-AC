@@ -2,8 +2,15 @@
 *.txt
 *.dump
 *.restart
+*.csv
+*.dat
 !README.txt
 *.png
+*.eps
+
+# Ignoring all log files:
+*.log
+*log.lammps
 
 # Ignoring all object files and executables:
 *.o
