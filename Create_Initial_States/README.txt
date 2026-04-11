@@ -39,3 +39,7 @@ The scripts are prefixed with the word 'plot'. All these scripts take a few comm
 
 Once all the above steps are done, the user can move on to the Check_Concatenation/ folder if the concantenations have not already been checked.
 
+Note that the names of the architecture folders for the Arc-1-1 (only two loops) have been slightly changed as compared to the names listed in the paper.
+Instead of mentioning the number of monomers in the two loops, their ratios are mentioned instead.
+For example, Arc-1-1[140-60] becomes Arc-1-1_3_7 since 60:140 = 3:7.
+
