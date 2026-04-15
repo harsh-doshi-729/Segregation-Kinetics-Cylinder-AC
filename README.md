@@ -1,6 +1,6 @@
 # Segregation Kinetics in Cylinder
 
-This repository contains the codes and some representative data from the work in "Segregation kinetics of topologically-modified ring polymers in cylindrical confinement".
+This repository contains the codes and some representative data from the work in "Kinetics of segregation of topologically-modified ring polymers in cylindrical confinement".
 
 There are four subfolders in this repository:
 1. Create_Initial_States/ contains the codes and data for simulations that create the initial mixed state of the two polymers in cylindrical confinement.
